@@ -33,3 +33,13 @@ docker-compose.override.yml
 
 # Misc
 *.log
+
+# Python extras
+.python-version
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node extras
+npm-debug.log*
+.eslintcache
