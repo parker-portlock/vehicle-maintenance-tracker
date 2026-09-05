@@ -22,4 +22,4 @@ where = ["."]
 include = ["app*"]
 
 [dependency-groups]
-dev = ["pytest>=8.0", "httpx>=0.27"]pip install pytest httpx
+dev = ["pytest>=8.0", "httpx>=0.27"]
