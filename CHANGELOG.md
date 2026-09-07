@@ -3,6 +3,20 @@
 All notable changes to this project are documented here.
 Format based on Keep a Changelog, adheres to Semantic Versioning.
 
+## [0.1.1] - 2026-09-07
+
+### Added
+- Initial database migration (all four tables)
+- Health endpoint smoke test
+- Alembic mako template
+
+### Fixed
+- Alembic config: DATABASE_URL injection + logging guard
+- CI failures: pyproject parse error, vite v7 pin, pytest exit code
+
+### Verified
+- End-to-end API: vehicle, task, log creation (201s)
+
 ## [0.1.0] - 2026-09-05
 
 ### Added
