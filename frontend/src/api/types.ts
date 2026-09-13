@@ -1,0 +1,31 @@
+export interface Vehicle {
+  id: string;
+  make: string;
+  model: string;
+  type: string;
+  year: number;
+  vin: string | null;
+  purchase_date: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MaintenanceTask {
+  id: string;
+  name: string;
+  description: string | null;
+  interval_miles: number | null;
+  interval_months: number | null;
+}
+
+export interface MaintenanceLog {
+  id: string;
+  vehicle_id: string;
+  task: MaintenanceTask;
+  mileage: number;
+  performed_on: string;
+  cost: number | null;
+  notes: string | null;
+  parts_used: { items?: { name?: string; qty?: string }[] } | null;
+  created_at: string;
+}

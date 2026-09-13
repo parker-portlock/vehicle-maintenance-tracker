@@ -43,3 +43,6 @@ htmlcov/
 # Node extras
 npm-debug.log*
 .eslintcache
+
+# Cline
+.clinerules/

@@ -1,4 +1,6 @@
 from uuid import UUID
+import hashlib
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -36,11 +38,40 @@ def create_log(
     vehicle = db.get(Vehicle, vehicle_id)
     if not vehicle:
         raise HTTPException(status_code=404, detail="Vehicle not found")
-    task = db.get(MaintenanceTask, payload.task_id)
+    
+    # If task_name is provided but no task_id, create a temporary task
+    task_id = payload.task_id
+    if payload.task_name and not payload.task_id:
+        # Create a hash-based UUID from the vehicle_id and task name to ensure uniqueness
+        task_hash = hashlib.md5(f"{vehicle_id}{payload.task_name}".encode()).hexdigest()
+        # Convert hash to UUID format (version 3 or 5)
+        task_id = uuid.uuid5(uuid.NAMESPACE_DNS, task_hash)
+        
+        # Check if this task already exists, if not create it
+        existing_task = db.scalar(select(MaintenanceTask).where(MaintenanceTask.id == task_id))
+        if not existing_task:
+            task = MaintenanceTask(
+                id=task_id,
+                name=payload.task_name,
+                description=None,
+                interval_miles=None,
+                interval_months=None
+            )
+            db.add(task)
+            db.flush()  # Make sure we have the task ID in DB before continuing
+    
+    # Check that either task_id or task_name is provided (but not both empty)
+    if not task_id and not payload.task_name:
+        raise HTTPException(status_code=422, detail="Either task_id or task_name must be provided")
+    
+    task = db.get(MaintenanceTask, task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
 
     data = payload.model_dump()
+    # Remove task_name from data since it's not a field of MaintenanceLog
+    data.pop("task_name", None)
+    
     parts = data.pop("parts_used", None)
     if parts is not None:
         data["parts_used"] = {"items": parts}  # wrap list for JSONB
@@ -65,6 +96,28 @@ def update_log(log_id: UUID, payload: LogUpdate, db: Session = Depends(get_db)):
     log = db.get(MaintenanceLog, log_id)
     if not log:
         raise HTTPException(status_code=404, detail="Log not found")
+
+    # Handle task name update
+    if payload.task_name and not payload.task_id:
+        # Create a hash-based UUID from the vehicle_id and task name to ensure uniqueness
+        task_hash = hashlib.md5(f"{log.vehicle_id}{payload.task_name}".encode()).hexdigest()
+        # Convert hash to UUID format (version 3 or 5)
+        task_id = uuid.uuid5(uuid.NAMESPACE_DNS, task_hash)
+        
+        # Check if this task already exists, if not create it
+        existing_task = db.scalar(select(MaintenanceTask).where(MaintenanceTask.id == task_id))
+        if not existing_task:
+            task = MaintenanceTask(
+                id=task_id,
+                name=payload.task_name,
+                description=None,
+                interval_miles=None,
+                interval_months=None
+            )
+            db.add(task)
+            db.flush()  # Make sure we have the task ID in DB before continuing
+        
+        payload.task_id = task_id
 
     data = payload.model_dump(exclude_unset=True)
     parts = data.pop("parts_used", None)
