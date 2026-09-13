@@ -29,8 +29,8 @@ export default function VehicleList() {
     try {
       await createVehicle.mutateAsync({
         ...values,
-        vin: values.vin || undefined,
-        purchase_date: values.purchase_date || undefined,
+        vin: values.vin || null,
+        purchase_date: values.purchase_date || null,
       });
       form.reset();
       setOpened(false);

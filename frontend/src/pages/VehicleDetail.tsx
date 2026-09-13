@@ -73,7 +73,7 @@ export default function VehicleDetail() {
       mileage: values.mileage,
       performed_on: values.performed_on,
       cost: values.cost ? Number(values.cost) : undefined,
-      notes: values.notes || undefined,
+      notes: values.notes || null,
       parts_used: parts,
     });
     
