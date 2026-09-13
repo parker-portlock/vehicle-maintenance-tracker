@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
   Badge, Button, Card, Group, Loader, Modal, NumberInput,
-  Select, Stack, Table, Text, TextInput, Title,
+  Select, Stack, Table, Text, TextInput, Title, Alert,
 } from "@mantine/core";
 import { Link } from "react-router-dom";
 import { useForm } from "@mantine/form";
@@ -12,19 +12,34 @@ export default function VehicleList() {
   const createVehicle = useCreateVehicle();
   const deleteVehicle = useDeleteVehicle();
   const [opened, setOpened] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const form = useForm({
     initialValues: { make: "", model: "", type: "car", year: new Date().getFullYear(), vin: "", purchase_date: "" },
   });
 
   const submit = form.onSubmit(async (values) => {
-    await createVehicle.mutateAsync({
-      ...values,
-      vin: values.vin || undefined,
-      purchase_date: values.purchase_date || undefined,
-    });
-    form.reset();
-    setOpened(false);
+    // Prevent duplicate submissions
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    setError(null);
+    
+    try {
+      await createVehicle.mutateAsync({
+        ...values,
+        vin: values.vin || undefined,
+        purchase_date: values.purchase_date || undefined,
+      });
+      form.reset();
+      setOpened(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An unknown error occurred");
+      console.error("Vehicle creation error:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
   });
 
   if (isLoading) return <Loader />;
@@ -78,6 +93,11 @@ export default function VehicleList() {
       <Modal opened={opened} onClose={() => setOpened(false)} title="Add Vehicle">
         <form onSubmit={submit}>
           <Stack gap="sm">
+            {error && (
+              <Alert variant="light" color="red" title="Error">
+                {error}
+              </Alert>
+            )}
             <TextInput required label="Make" {...form.getInputProps("make")} />
             <TextInput required label="Model" {...form.getInputProps("model")} />
             <Select
@@ -93,7 +113,7 @@ export default function VehicleList() {
               placeholder="YYYY-MM-DD"
               {...form.getInputProps("purchase_date")}
             />
-            <Button type="submit" loading={createVehicle.isPending}>
+            <Button type="submit" loading={isSubmitting || createVehicle.isPending}>
               Save
             </Button>
           </Stack>

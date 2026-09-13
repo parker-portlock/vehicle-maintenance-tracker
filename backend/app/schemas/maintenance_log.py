@@ -9,7 +9,8 @@ from app.schemas.maintenance_task import TaskOut
 
 
 class LogCreate(BaseModel):
-    task_id: UUID
+    task_id: UUID | None = None
+    task_name: str | None = None
     mileage: int = Field(ge=0)
     performed_on: date
     cost: Decimal | None = Field(default=None, ge=0)
@@ -19,6 +20,7 @@ class LogCreate(BaseModel):
 
 class LogUpdate(BaseModel):
     task_id: UUID | None = None
+    task_name: str | None = None
     mileage: int | None = Field(default=None, ge=0)
     performed_on: date | None = None
     cost: Decimal | None = Field(default=None, ge=0)

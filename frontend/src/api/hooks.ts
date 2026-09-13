@@ -41,6 +41,10 @@ export function useCreateVehicle() {
         body: JSON.stringify(data),
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["vehicles"] }),
+    onError: (error) => {
+      // Handle potential duplicate VIN error
+      console.error("Vehicle creation error:", error);
+    }
   });
 }
 
@@ -57,7 +61,8 @@ export function useCreateLog(vehicleId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: {
-      task_id: string;
+      task_id?: string;
+      task_name?: string;
       mileage: number;
       performed_on: string;
       cost?: number;

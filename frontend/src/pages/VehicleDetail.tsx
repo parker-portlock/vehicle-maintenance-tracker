@@ -42,12 +42,14 @@ export default function VehicleDetail() {
 
   const submit = form.onSubmit(async (values) => {
     let task_id = values.task_id;
-    // "new:<name>" is the create-new-task option
+    // "new:<name>" is the create-new-task option - this will be handled by the backend
     if (task_id.startsWith("new:")) {
       const name = task_id.slice(4);
       const task = await createTask.mutateAsync({ name });
       task_id = task.id;
     }
+    
+    // If we're using task_name instead of task_id, we'll pass it directly to backend
     let parts: unknown[] | undefined;
     if (values.parts_used.trim()) {
       parts = values.parts_used
@@ -59,14 +61,28 @@ export default function VehicleDetail() {
           return { name, qty };
         });
     }
-    await createLog.mutateAsync({
-      task_id,
-      mileage: values.mileage,
-      performed_on: values.performed_on,
-      cost: values.cost ? Number(values.cost) : undefined,
-      notes: values.notes || undefined,
-      parts_used: parts,
-    });
+    
+    // If task_id is empty, we pass task_name to backend
+    if (!task_id) {
+      await createLog.mutateAsync({
+        task_name: values.task_id,  // This is the task name when no ID is provided
+        mileage: values.mileage,
+        performed_on: values.performed_on,
+        cost: values.cost ? Number(values.cost) : undefined,
+        notes: values.notes || undefined,
+        parts_used: parts,
+      });
+    } else {
+      await createLog.mutateAsync({
+        task_id,
+        mileage: values.mileage,
+        performed_on: values.performed_on,
+        cost: values.cost ? Number(values.cost) : undefined,
+        notes: values.notes || undefined,
+        parts_used: parts,
+      });
+    }
+    
     form.reset();
     setOpened(false);
   });
