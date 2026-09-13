@@ -60,7 +60,8 @@ def create_log(
             db.add(task)
             db.flush()  # Make sure we have the task ID in DB before continuing
     
-    if not task_id:
+    # Check that either task_id or task_name is provided (but not both empty)
+    if not task_id and not payload.task_name:
         raise HTTPException(status_code=422, detail="Either task_id or task_name must be provided")
     
     task = db.get(MaintenanceTask, task_id)
@@ -68,6 +69,9 @@ def create_log(
         raise HTTPException(status_code=404, detail="Task not found")
 
     data = payload.model_dump()
+    # Remove task_name from data since it's not a field of MaintenanceLog
+    data.pop("task_name", None)
+    
     parts = data.pop("parts_used", None)
     if parts is not None:
         data["parts_used"] = {"items": parts}  # wrap list for JSONB
