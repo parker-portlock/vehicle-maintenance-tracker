@@ -81,11 +81,27 @@ export function useCreateLog(vehicleId: string) {
 export function useCreateTask() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: { name: string; interval_miles?: number }) =>
-      apiFetch<MaintenanceTask>("/api/v1/tasks", {
+    mutationFn: (data: { name: string; description?: string | null; interval_miles?: number | null; interval_months?: number | null }) => {
+      // Convert empty strings to null for optional numeric fields to avoid validation errors
+      const processedData = {
+        ...data,
+        interval_miles: data.interval_miles === "" ? null : data.interval_miles,
+        interval_months: data.interval_months === "" ? null : data.interval_months,
+      };
+      return apiFetch<MaintenanceTask>("/api/v1/tasks", {
         method: "POST",
-        body: JSON.stringify(data),
-      }),
+        body: JSON.stringify(processedData),
+      });
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+  });
+}
+
+export function useDeleteTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      fetch(`/api/v1/tasks/${id}`, { method: "DELETE" }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
   });
 }
