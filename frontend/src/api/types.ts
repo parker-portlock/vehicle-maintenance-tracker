@@ -29,3 +29,17 @@ export interface MaintenanceLog {
   parts_used: { items?: { name?: string; qty?: string }[] } | null;
   created_at: string;
 }
+
+export interface Part {
+  id: string;
+  brand: string;
+  name: string;
+  category: string;
+  part_number: string;
+  specification: string | null;
+  capacity: number | null;
+  cost: number | null;
+  quantity: number;
+  supplier: string | null;
+  notes: string | null;
+}

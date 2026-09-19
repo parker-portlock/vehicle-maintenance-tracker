@@ -4,6 +4,7 @@ import Dashboard from "./pages/Dashboard";
 import VehicleList from "./pages/VehicleList";
 import VehicleDetail from "./pages/VehicleDetail";
 import Tasks from "./pages/Tasks";
+import Inventory from "./pages/Inventory";
 
 // Workaround for TypeScript issue with isActive property in Mantine v7
 const linkStyle = (isActive: boolean) => ({
@@ -28,6 +29,9 @@ export default function App() {
             <UnstyledButton component={NavLink} to="/tasks" style={({ isActive }) => linkStyle(isActive)}>
               Tasks
             </UnstyledButton>
+            <UnstyledButton component={NavLink} to="/inventory" style={({ isActive }) => linkStyle(isActive)}>
+              Inventory
+            </UnstyledButton>
           </Group>
         </Group>
         <Routes>
@@ -35,6 +39,7 @@ export default function App() {
           <Route path="/vehicles" element={<VehicleList />} />
           <Route path="/vehicles/:id" element={<VehicleDetail />} />
           <Route path="/tasks" element={<Tasks />} />
+          <Route path="/inventory" element={<Inventory />} />
         </Routes>
       </Container>
     </>
