@@ -67,10 +67,16 @@ export default function Inventory() {
     setError(null);
 
     try {
+      // Handle empty capacity values by converting to null
+      const processedValues = {
+        ...values,
+        capacity: values.capacity === "" ? null : values.capacity
+      };
+
       if (editingPart) {
-        await updatePart.mutateAsync({ ...values, id: editingPart.id });
+        await updatePart.mutateAsync({ ...processedValues, id: editingPart.id });
       } else {
-        await createPart.mutateAsync(values);
+        await createPart.mutateAsync(processedValues);
       }
       form.reset();
       setOpened(false);
