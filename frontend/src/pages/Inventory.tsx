@@ -95,6 +95,18 @@ export default function Inventory() {
     }
   };
 
+  // Format currency to always show 2 decimal places
+  const formatCurrency = (value: number | null | undefined): string => {
+    if (value === null || value === undefined) return "—";
+    return `$${Number(value).toFixed(2)}`;
+  };
+
+  // Format capacity with unit
+  const formatCapacity = (value: number | null | undefined, unit?: string): string => {
+    if (value === null || value === undefined) return "—";
+    return `${Number(value).toFixed(2)}${unit ? ` ${unit}` : ""}`;
+  };
+
   if (isLoading) return <Loader />;
 
   return (
@@ -142,8 +154,8 @@ export default function Inventory() {
                 <Table.Td>{part.category}</Table.Td>
                 <Table.Td>{part.part_number}</Table.Td>
                 <Table.Td>{part.specification ?? "—"}</Table.Td>
-                <Table.Td>{part.capacity?.toFixed(2) ?? "—"}</Table.Td>
-                <Table.Td>${part.cost?.toFixed(2) ?? "—"}</Table.Td>
+                <Table.Td>{formatCapacity(part.capacity, "units")}</Table.Td>
+                <Table.Td>{formatCurrency(part.cost)}</Table.Td>
                 <Table.Td>{part.quantity}</Table.Td>
                 <Table.Td>{part.supplier ?? "—"}</Table.Td>
                 <Table.Td>{part.notes ?? "—"}</Table.Td>
@@ -206,15 +218,15 @@ export default function Inventory() {
               {...form.getInputProps("part_number")}
             />
             <TextInput
-              label="Specification (optional)"
+              label="Specification"
               {...form.getInputProps("specification")}
             />
             <NumberInput
-              label="Capacity (optional)"
+              label="Capacity"
               {...form.getInputProps("capacity")}
             />
             <NumberInput
-              label="Cost (optional)"
+              label="Cost"
               {...form.getInputProps("cost")}
             />
             <NumberInput
@@ -223,11 +235,11 @@ export default function Inventory() {
               {...form.getInputProps("quantity")}
             />
             <TextInput
-              label="Supplier (optional)"
+              label="Supplier"
               {...form.getInputProps("supplier")}
             />
             <TextInput
-              label="Notes (optional)"
+              label="Notes"
               {...form.getInputProps("notes")}
             />
             <Button type="submit" loading={isSubmitting || createPart.isPending || updatePart.isPending}>
