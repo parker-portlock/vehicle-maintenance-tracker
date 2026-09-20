@@ -85,8 +85,8 @@ export function useCreateTask() {
       // Convert empty strings to null for optional numeric fields to avoid validation errors
       const processedData = {
         ...data,
-        interval_miles: data.interval_miles === "" ? null : data.interval_miles,
-        interval_months: data.interval_months === "" ? null : data.interval_months,
+        interval_miles: typeof data.interval_miles === "string" && data.interval_miles === "" ? null : data.interval_miles,
+        interval_months: typeof data.interval_months === "string" && data.interval_months === "" ? null : data.interval_months,
       };
       return apiFetch<MaintenanceTask>("/api/v1/tasks", {
         method: "POST",
