@@ -3,6 +3,14 @@
 All notable changes to this project are documented here.
 Format based on Keep a Changelog, adheres to Semantic Versioning.
 
+## [0.3.1] - 2026-09-20
+
+### Fixed
+- Handle empty capacity values in inventory forms by converting them to null
+- Improved currency formatting for cost display (always shows 2 decimal places)
+- Enhanced capacity formatting with units (shows "units" after the value)
+- Updated form labels to be required instead of optional (part_number, capacity, cost, supplier, notes)
+
 ## [0.3.0] - 2026-09-19
 
 ### Added
@@ -42,38 +50,6 @@ Format based on Keep a Changelog, adheres to Semantic Versioning.
 - CORS issues for some of the task posts
 - Multiple errors for API calls
 - Frontend build configuration
-
-## [0.1.1] - 2026-09-07
-
-### Added
-- Initial database migration (all four tables)
-- Health endpoint smoke test
-- Alembic mako template
-
-### Fixed
-- Alembic config: DATABASE_URL injection + logging guard
-- CI failures: pyproject parse error, vite v7 pin, pytest exit code
-
-### Verified
-- End-to-end API: vehicle, task, log creation (201s)
-
-## [0.1.0] - 2026-09-05
-
-### Added
-- Initial scaffold: FastAPI backend, React frontend, Postgres schema
-- Pydantic schemas and routers for vehicles, tasks, logs, attachments
-- S3 service stub for attachment handling
-
-### Changed
-- Fixed pyproject build backend to setuptools.build_meta
-- Switched container runtime to Podman (rootless)
-
-### Fixed
-- Import chain issues in models/schemas/routers packages
-# Changelog
-
-All notable changes to this project are documented here.
-Format based on Keep a Changelog, adheres to Semantic Versioning.
 
 ## [0.1.1] - 2026-09-07
 
