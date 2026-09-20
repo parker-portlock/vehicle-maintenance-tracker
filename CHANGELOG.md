@@ -3,6 +3,25 @@
 All notable changes to this project are documented here.
 Format based on Keep a Changelog, adheres to Semantic Versioning.
 
+## [0.3.0] - 2026-09-19
+
+### Added
+- Parts inventory management functionality with CRUD operations
+- Parts table with comprehensive fields (brand, category, part_number, specification, capacity)
+- Frontend pages for Tasks and Inventory management
+- Parts router to main application
+- Database migrations for parts table schema updates
+- Tabler Icons React library for UI icons
+
+### Changed
+- Enhanced parts table schema with new fields instead of quantity and supplier
+- Updated frontend navigation to include Tasks and Inventory links
+- Integrated parts router into main application
+
+### Fixed
+- Various frontend build configuration issues
+- CORS issues for some API endpoints
+
 ## [0.2.0] - 2026-09-13
 
 ### Added
