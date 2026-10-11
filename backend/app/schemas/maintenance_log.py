@@ -1,11 +1,30 @@
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.schemas.maintenance_task import TaskOut
+
+
+class LogPartRef(BaseModel):
+    """Reference to an inventory part used by a log.
+
+    ``id`` is the inventory part's id; ``quantity`` is the exact amount used.
+    """
+
+    id: UUID
+    quantity: int | None = Field(default=None, ge=0)
+
+
+class LogPartOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    brand: str
+    name: str
+    category: str
+    quantity: int | None
 
 
 class LogCreate(BaseModel):
@@ -15,7 +34,7 @@ class LogCreate(BaseModel):
     performed_on: date
     cost: Decimal | None = Field(default=None, ge=0)
     notes: str | None = None
-    parts_used: list[Any] | None = None
+    parts_used: list[LogPartRef] | None = None
 
 
 class LogUpdate(BaseModel):
@@ -25,7 +44,7 @@ class LogUpdate(BaseModel):
     performed_on: date | None = None
     cost: Decimal | None = Field(default=None, ge=0)
     notes: str | None = None
-    parts_used: list[Any] | None = None
+    parts_used: list[LogPartRef] | None = None
 
 
 class LogOut(BaseModel):
@@ -38,5 +57,5 @@ class LogOut(BaseModel):
     performed_on: date
     cost: Decimal | None
     notes: str | None
-    parts_used: dict | None
+    parts_used: list[LogPartOut]
     created_at: datetime

@@ -7,10 +7,31 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Vehicle, MaintenanceTask, MaintenanceLog
-from app.schemas.maintenance_log import LogCreate, LogUpdate, LogOut
+from app.models import Vehicle, MaintenanceTask, MaintenanceLog, Part, LogPart
+from app.schemas.maintenance_log import (
+    LogCreate,
+    LogUpdate,
+    LogOut,
+    LogPartRef,
+)
 
 router = APIRouter(tags=["logs"])
+
+
+def _build_log_parts(db: Session, items: list[LogPartRef] | None) -> list[LogPart]:
+    """Validate a list of part references and build LogPart rows.
+
+    Duplicates are collapsed (last quantity wins) to respect the composite
+    primary key, and each part id must reference an existing inventory part.
+    """
+    if not items:
+        return []
+    seen: dict[UUID, LogPart] = {}
+    for item in items:
+        if db.get(Part, item.id) is None:
+            raise HTTPException(status_code=400, detail=f"Part not found: {item.id}")
+        seen[item.id] = LogPart(part_id=item.id, quantity=item.quantity)
+    return list(seen.values())
 
 
 @router.get(
@@ -69,14 +90,12 @@ def create_log(
         raise HTTPException(status_code=404, detail="Task not found")
 
     data = payload.model_dump()
-    # Remove task_name from data since it's not a field of MaintenanceLog
+    # Remove task_name and parts_used from data: parts live in the log_parts table
     data.pop("task_name", None)
-    
-    parts = data.pop("parts_used", None)
-    if parts is not None:
-        data["parts_used"] = {"items": parts}  # wrap list for JSONB
+    data.pop("parts_used", None)
 
     log = MaintenanceLog(vehicle_id=vehicle_id, **data)
+    log.parts_used.extend(_build_log_parts(db, payload.parts_used))
     db.add(log)
     db.commit()
     db.refresh(log)
@@ -120,12 +139,15 @@ def update_log(log_id: UUID, payload: LogUpdate, db: Session = Depends(get_db)):
         payload.task_id = task_id
 
     data = payload.model_dump(exclude_unset=True)
-    parts = data.pop("parts_used", None)
-    if parts is not None:
-        data["parts_used"] = {"items": parts}
+    data.pop("parts_used", None)
 
     for field, value in data.items():
         setattr(log, field, value)
+    # Only touch parts_used when the client explicitly provided it. Use the
+    # typed pydantic objects (payload.parts_used), not the dumped dicts.
+    if "parts_used" in payload.model_fields_set:
+        log.parts_used.clear()
+        log.parts_used.extend(_build_log_parts(db, payload.parts_used))
     db.commit()
     db.refresh(log)
     return log

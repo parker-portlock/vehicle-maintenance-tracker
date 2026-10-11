@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "./client";
-import type { MaintenanceLog, MaintenanceTask, Vehicle, Part } from "./types";
+import type { MaintenanceLog, MaintenanceTask, Vehicle, Part, LogPartRef } from "./types";
 
 export function useVehicles() {
   return useQuery({
@@ -67,7 +67,7 @@ export function useCreateLog(vehicleId: string) {
       performed_on: string;
       cost?: number;
       notes?: string;
-      parts_used?: unknown[];
+      parts_used?: LogPartRef[] | null;
     }) =>
       apiFetch<MaintenanceLog>(`/api/v1/vehicles/${vehicleId}/logs`, {
         method: "POST",
@@ -93,6 +93,27 @@ export function useCreateTask() {
         body: JSON.stringify(processedData),
       });
     },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+  });
+}
+
+export function useUpdateTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      ...data
+    }: {
+      id: string;
+      name?: string | null;
+      description?: string | null;
+      interval_miles?: number | null;
+      interval_months?: number | null;
+    }) =>
+      apiFetch<MaintenanceTask>(`/api/v1/tasks/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
   });
 }

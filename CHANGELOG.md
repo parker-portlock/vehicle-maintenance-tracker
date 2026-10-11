@@ -3,6 +3,23 @@
 All notable changes to this project are documented here.
 Format based on Keep a Changelog, adheres to Semantic Versioning.
 
+## [0.4.0] - 2026-10-11
+
+### Added
+- Maintenance logs can now reference inventory parts. Each log holds a `parts_used` list of parts with an exact quantity per part.
+- `log_parts` table (log_id + part_id composite key) with a `quantity` column.
+- `parts_used` field on the log API: create (POST), read (GET), update (PUT /logs/{id}).
+- "Inventory Used" section in the Log Maintenance form: select one or more parts from the inventory and set a quantity for each.
+- Task edit form (reuses the add form) and the task update endpoint.
+- Cascade delete: removing a log or a part removes its `log_parts` links.
+
+### Changed
+- Log responses now include the linked parts as `{id, brand, name, category, quantity}`.
+- Free-text "Parts Used" field removed from the Log Maintenance form.
+
+### Removed
+- `parts_used` JSONB column on the `maintenance_logs` table (legacy free-text parts).
+
 ## [0.3.1] - 2026-09-20
 
 ### Fixed

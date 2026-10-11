@@ -1,13 +1,15 @@
 import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
-  Badge, Button, Card, Group, Loader, Modal, NativeSelect,
-  NumberInput, Stack, Table, Text, Textarea, TextInput, Title,
+  ActionIcon, Badge, Button, Card, Group, Loader, Modal, NativeSelect,
+  NumberInput, Select, Stack, Table, Text, Textarea, TextInput, Title,
 } from "@mantine/core";
+import { IconPlus, IconX } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
 import {
-  useCreateLog, useCreateTask, useTasks, useVehicle, useVehicleLogs,
+  useCreateLog, useCreateTask, useParts, useTasks, useVehicle, useVehicleLogs,
 } from "../api/hooks";
+import type { LogPartRef, Part } from "../api/types";
 
 export default function VehicleDetail() {
   const { id } = useParams<{ id: string }>();
@@ -16,12 +18,24 @@ export default function VehicleDetail() {
   const { data: tasks } = useTasks();
   const createLog = useCreateLog(id!);
   const createTask = useCreateTask();
+  const { data: parts } = useParts();
   const [opened, setOpened] = useState(false);
+
+  // Inventory parts used in this log (managed outside the Mantine form)
+  const [selectedParts, setSelectedParts] = useState<LogPartRef[]>([]);
+  // The part currently being picked + its quantity in the "add" row
+  const [partToAdd, setPartToAdd] = useState<string | null>(null);
+  const [partQty, setPartQty] = useState<number>(1);
+
+  const partById = new Map<string, Part>((parts ?? []).map((p) => [p.id, p]));
+  const partOptions = (parts ?? []).map((p) => ({
+    value: p.id,
+    label: `${p.brand} ${p.name}`,
+  }));
 
   const form = useForm({
     initialValues: {
       task_id: "", mileage: 0, performed_on: "", cost: "", notes: "",
-      parts_used: "",
     },
   });
 
@@ -40,6 +54,36 @@ export default function VehicleDetail() {
     return sorted[0]?.mileage;
   }, [logs]);
 
+  const addPart = () => {
+    if (!partToAdd) return;
+    const qty = partQty ?? 1;
+    setSelectedParts((prev) => {
+      const existing = prev.find((p) => p.id === partToAdd);
+      if (existing) {
+        return prev.map((p) => (p.id === partToAdd ? { ...p, quantity: qty } : p));
+      }
+      return [...prev, { id: partToAdd, quantity: qty }];
+    });
+    setPartToAdd(null);
+    setPartQty(1);
+  };
+
+  const removePart = (id: string) =>
+    setSelectedParts((prev) => prev.filter((p) => p.id !== id));
+
+  const updateQty = (id: string, qty: number | string | undefined) =>
+    setSelectedParts((prev) =>
+      prev.map((p) =>
+        p.id === id ? { ...p, quantity: qty === undefined ? null : Number(qty) } : p
+      )
+    );
+
+  const resetParts = () => {
+    setSelectedParts([]);
+    setPartToAdd(null);
+    setPartQty(1);
+  };
+
   const submit = form.onSubmit(async (values) => {
     let task_id = values.task_id;
     // "new:<name>" is the create-new-task option - this will be handled by the backend
@@ -47,19 +91,6 @@ export default function VehicleDetail() {
       const name = task_id.slice(4);
       const task = await createTask.mutateAsync({ name });
       task_id = task.id;
-    }
-    
-    // If we're using task_name instead of task_id, we'll pass it directly to backend
-    let parts: unknown[] | undefined;
-    if (values.parts_used.trim()) {
-      parts = values.parts_used
-        .split("\n")
-        .map((line) => line.trim())
-        .filter(Boolean)
-        .map((line) => {
-          const [name, qty] = line.split("|").map((s) => s.trim());
-          return { name, qty };
-        });
     }
     
     // Validate that we have a proper task_id
@@ -74,10 +105,11 @@ export default function VehicleDetail() {
       performed_on: values.performed_on,
       cost: values.cost ? Number(values.cost) : undefined,
       notes: values.notes || undefined,
-      parts_used: parts,
+      parts_used: selectedParts.length ? selectedParts : null,
     });
     
     form.reset();
+    resetParts();
     setOpened(false);
   });
 
@@ -119,9 +151,9 @@ export default function VehicleDetail() {
                 <Table.Td>{log.cost ? `$${Number(log.cost).toFixed(2)}` : "—"}</Table.Td>
                 <Table.Td>
                   {log.notes}
-                  {log.parts_used?.items?.length ? (
+                  {log.parts_used?.length ? (
                     <Text size="xs" c="dimmed">
-                      Parts: {log.parts_used.items.map((p) => `${p.name} ×${p.qty ?? 1}`).join(", ")}
+                      Parts: {log.parts_used.map((p) => `${p.name} ×${p.quantity ?? 1}`).join(", ")}
                     </Text>
                   ) : null}
                 </Table.Td>
@@ -157,14 +189,78 @@ export default function VehicleDetail() {
             />
             <NumberInput label="Cost ($)" min={0} decimalScale={2} {...form.getInputProps("cost")} />
             <Textarea label="Notes" autosize minRows={2} {...form.getInputProps("notes")} />
-            <Textarea
-              label="Parts Used"
-              description="One per line: Name | Qty"
-              placeholder={"Mobil 1 15W-50 | 4 qt\nK&N KN-204 | 1"}
-              autosize
-              minRows={2}
-              {...form.getInputProps("parts_used")}
-            />
+            {/* Inventory Used */}
+            <Stack gap="xs" mt="xs">
+              <Text fw={600}>Inventory Used</Text>
+              <Text size="sm" c="dimmed">
+                Add the inventory parts used in this maintenance, with an exact quantity for each.
+              </Text>
+
+              {selectedParts.length > 0 && (
+                <Stack gap={6} my="xs">
+                  {selectedParts.map((p) => {
+                    const part = partById.get(p.id);
+                    return (
+                      <Group key={p.id} gap="xs">
+                        <Group gap="sm" grow>
+                          <Text size="sm" lineClamp={1}>
+                            {part ? `${part.brand} ${part.name}` : p.id}
+                          </Text>
+                        </Group>
+                        <NumberInput
+                          w={110}
+                          label="Qty"
+                          min={0}
+                          value={p.quantity ?? undefined}
+                          onChange={(v) => updateQty(p.id, v)}
+                        />
+                        <ActionIcon
+                          variant="light"
+                          color="red"
+                          onClick={() => removePart(p.id)}
+                          aria-label={`Remove ${part ? part.name : "part"}`}
+                        >
+                          <IconX size={16} />
+                        </ActionIcon>
+                      </Group>
+                    );
+                  })}
+                </Stack>
+              )}
+
+              <Select
+                searchable
+                clearable
+                label="Select a part"
+                placeholder={
+                  parts?.length ? "Choose from inventory" : "No inventory parts yet"
+                }
+                data={partOptions}
+                value={partToAdd}
+                onChange={(v) => setPartToAdd(v)}
+                nothingFoundMessage="No parts found"
+              />
+              <Group gap="xs">
+                <NumberInput
+                  w={100}
+                  label="Qty"
+                  min={0}
+                  value={partQty}
+                  onChange={(v) => setPartQty(v === undefined ? 1 : Number(v))}
+                />
+                <Button
+                  type="button"
+                  variant="light"
+                  leftSection={<IconPlus size={14} />}
+                  onClick={addPart}
+                  disabled={!partToAdd}
+                  mt={22}
+                >
+                  Add
+                </Button>
+              </Group>
+            </Stack>
+
             <Button type="submit" loading={createLog.isPending}>Save</Button>
           </Stack>
         </form>
