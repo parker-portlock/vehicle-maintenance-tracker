@@ -73,8 +73,11 @@ export function useCreateLog(vehicleId: string) {
         method: "POST",
         body: JSON.stringify(data),
       }),
-    onSuccess: () =>
-      qc.invalidateQueries({ queryKey: ["vehicles", vehicleId, "logs"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["vehicles", vehicleId, "logs"] });
+      // Parts used in the log decrement inventory, so refresh the parts list
+      qc.invalidateQueries({ queryKey: ["parts"] });
+    },
   });
 }
 

@@ -34,6 +34,18 @@ def _build_log_parts(db: Session, items: list[LogPartRef] | None) -> list[LogPar
     return list(seen.values())
 
 
+def _apply_inventory_adjustments(db: Session, log_parts: list[LogPart], sign: int) -> None:
+    """Adjust each part's inventory quantity by the quantity in the log parts.
+
+    ``sign`` is -1 to consume stock (usage) or +1 to restore it. Stock never
+    goes below zero.
+    """
+    for lp in log_parts:
+        part = db.get(Part, lp.part_id)
+        if part and lp.quantity:
+            part.quantity = max(0, part.quantity + sign * lp.quantity)
+
+
 @router.get(
     "/vehicles/{vehicle_id}/logs", response_model=list[LogOut], tags=["logs"]
 )
@@ -96,6 +108,8 @@ def create_log(
 
     log = MaintenanceLog(vehicle_id=vehicle_id, **data)
     log.parts_used.extend(_build_log_parts(db, payload.parts_used))
+    # Decrement inventory for the parts used in this log
+    _apply_inventory_adjustments(db, log.parts_used, sign=-1)
     db.add(log)
     db.commit()
     db.refresh(log)
@@ -146,8 +160,12 @@ def update_log(log_id: UUID, payload: LogUpdate, db: Session = Depends(get_db)):
     # Only touch parts_used when the client explicitly provided it. Use the
     # typed pydantic objects (payload.parts_used), not the dumped dicts.
     if "parts_used" in payload.model_fields_set:
+        previous_parts = list(log.parts_used)
         log.parts_used.clear()
         log.parts_used.extend(_build_log_parts(db, payload.parts_used))
+        # Restore the previously consumed stock, then apply the new usage
+        _apply_inventory_adjustments(db, previous_parts, sign=1)
+        _apply_inventory_adjustments(db, log.parts_used, sign=-1)
     db.commit()
     db.refresh(log)
     return log
@@ -158,5 +176,7 @@ def delete_log(log_id: UUID, db: Session = Depends(get_db)):
     log = db.get(MaintenanceLog, log_id)
     if not log:
         raise HTTPException(status_code=404, detail="Log not found")
+    # Return the consumed inventory before the log's parts are cascade-deleted
+    _apply_inventory_adjustments(db, list(log.parts_used), sign=1)
     db.delete(log)  # cascades attachments
     db.commit()

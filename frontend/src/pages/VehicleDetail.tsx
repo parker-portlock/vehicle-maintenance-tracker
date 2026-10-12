@@ -30,7 +30,9 @@ export default function VehicleDetail() {
   const partById = new Map<string, Part>((parts ?? []).map((p) => [p.id, p]));
   const partOptions = (parts ?? []).map((p) => ({
     value: p.id,
-    label: `${p.brand} ${p.name}`,
+    // Zero-stock parts are grayed out, marked unavailable, and not selectable
+    label: `${p.brand} ${p.name}${p.quantity === 0 ? " (Not Available)" : ""}`,
+    disabled: p.quantity === 0,
   }));
 
   const form = useForm({
