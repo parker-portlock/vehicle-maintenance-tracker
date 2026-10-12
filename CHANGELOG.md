@@ -3,17 +3,6 @@
 All notable changes to this project are documented here.
 Format based on Keep a Changelog, adheres to Semantic Versioning.
 
-## [0.4.1] - 2026-10-11
-
-### Fixed
-- Log maintenance form: using an inventory part now decrements the part's stock by the quantity used
-- Stock restore on log update (old usage returned before new usage applied) and on log delete (usage returned)
-- Stock never drops below zero
-- Frontend refreshes the parts list after a log is created so updated counts display
-
-### Changed
-- Log maintenance form: parts with zero stock are grayed out in the part dropdown, labeled "(Not Available)", and cannot be selected
-
 ## [0.4.0] - 2026-10-11
 
 ### Added
@@ -27,9 +16,16 @@ Format based on Keep a Changelog, adheres to Semantic Versioning.
 ### Changed
 - Log responses now include the linked parts as `{id, brand, name, category, quantity}`.
 - Free-text "Parts Used" field removed from the Log Maintenance form.
+- Log maintenance form: parts with zero stock are grayed out in the part dropdown, labeled "(Not Available)", and cannot be selected
 
 ### Removed
 - `parts_used` JSONB column on the `maintenance_logs` table (legacy free-text parts).
+
+### Fixed
+- Log maintenance form: using an inventory part now decrements the part's stock by the quantity used
+- Stock restore on log update (old usage returned before new usage applied) and on log delete (usage returned)
+- Stock never drops below zero
+- Frontend refreshes the parts list after a log is created so updated counts display
 
 ## [0.3.1] - 2026-09-20
 
