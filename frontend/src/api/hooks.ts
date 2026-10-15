@@ -81,6 +81,33 @@ export function useCreateLog(vehicleId: string) {
   });
 }
 
+export function useUpdateLog(vehicleId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      logId,
+      ...data
+    }: {
+      logId: string;
+      task_id?: string;
+      mileage?: number;
+      performed_on?: string;
+      cost?: number;
+      notes?: string | null;
+      parts_used?: LogPartRef[] | null;
+    }) =>
+      apiFetch<MaintenanceLog>(`/api/v1/logs/${logId}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["vehicles", vehicleId, "logs"] });
+      // Parts used in the log change inventory, so refresh the parts list
+      qc.invalidateQueries({ queryKey: ["parts"] });
+    },
+  });
+}
+
 export function useCreateTask() {
   const qc = useQueryClient();
   return useMutation({
