@@ -108,6 +108,19 @@ export function useUpdateLog(vehicleId: string) {
   });
 }
 
+export function useDeleteLog(vehicleId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (logId: string) =>
+      fetch(`/api/v1/logs/${logId}`, { method: "DELETE" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["vehicles", vehicleId, "logs"] });
+      // Deleting a log returns its parts to inventory, so refresh the parts list
+      qc.invalidateQueries({ queryKey: ["parts"] });
+    },
+  });
+}
+
 export function useCreateTask() {
   const qc = useQueryClient();
   return useMutation({

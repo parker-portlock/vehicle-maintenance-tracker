@@ -3,7 +3,7 @@ import {
   ActionIcon, Badge, Button, Card, Group, Loader, Modal, NumberInput,
   Select, Stack, Table, Text, TextInput, Title, Alert,
 } from "@mantine/core";
-import { IconEdit } from "@tabler/icons-react";
+import { IconEdit, IconTrash } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from "../api/hooks";
 import type { MaintenanceTask } from "../api/types";
@@ -135,10 +135,10 @@ export default function Tasks() {
                     >
                       <IconEdit size={16} />
                     </ActionIcon>
-                    <Button
-                      size="xs"
-                      variant="subtle"
+                    <ActionIcon
+                      variant="light"
                       color="red"
+                      aria-label={`Delete ${t.name}`}
                       onClick={async () => {
                         if (
                           confirm(
@@ -155,8 +155,8 @@ export default function Tasks() {
                         }
                       }}
                     >
-                      Delete
-                    </Button>
+                      <IconTrash size={16} />
+                    </ActionIcon>
                   </Group>
                 </Table.Td>
               </Table.Tr>

@@ -4,10 +4,10 @@ import {
   ActionIcon, Badge, Button, Card, Group, Loader, Modal, NativeSelect,
   NumberInput, Select, Stack, Table, Text, Textarea, TextInput, Title,
 } from "@mantine/core";
-import { IconEdit, IconPlus, IconX } from "@tabler/icons-react";
+import { IconEdit, IconPlus, IconTrash, IconX } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
 import {
-  useCreateLog, useCreateTask, useParts, useTasks, useUpdateLog, useVehicle, useVehicleLogs,
+  useCreateLog, useCreateTask, useDeleteLog, useParts, useTasks, useUpdateLog, useVehicle, useVehicleLogs,
 } from "../api/hooks";
 import type { LogPartRef, MaintenanceLog, Part } from "../api/types";
 
@@ -18,6 +18,7 @@ export default function VehicleDetail() {
   const { data: tasks } = useTasks();
   const createLog = useCreateLog(id!);
   const updateLog = useUpdateLog(id!);
+  const deleteLog = useDeleteLog(id!);
   const createTask = useCreateTask();
   const { data: parts } = useParts();
   const [opened, setOpened] = useState(false);
@@ -110,6 +111,16 @@ export default function VehicleDetail() {
     setPartToAdd(null);
     setPartQty(1);
     setOpened(true);
+  };
+
+  const handleDeleteLog = (log: MaintenanceLog) => {
+    if (
+      confirm(
+        `Delete this "${log.task.name}" log?\n\nParts used in this log will be returned to inventory.`
+      )
+    ) {
+      deleteLog.mutate(log.id);
+    }
   };
 
   const submit = form.onSubmit(async (values) => {
@@ -206,6 +217,14 @@ export default function VehicleDetail() {
                       aria-label={`Edit ${log.task.name} log`}
                     >
                       <IconEdit size={16} />
+                    </ActionIcon>
+                    <ActionIcon
+                      variant="light"
+                      color="red"
+                      onClick={() => handleDeleteLog(log)}
+                      aria-label={`Delete ${log.task.name} log`}
+                    >
+                      <IconTrash size={16} />
                     </ActionIcon>
                   </Group>
                 </Table.Td>
