@@ -3,6 +3,11 @@
 All notable changes to this project are documented here.
 Format based on Keep a Changelog, adheres to Semantic Versioning.
 
+## [0.4.1] - 2026-10-15
+
+### Added
+- Parts Used column in the vehicle log table, separate from the Notes column (parts previously displayed inline under Notes)
+
 ## [0.4.0] - 2026-10-11
 
 ### Added
