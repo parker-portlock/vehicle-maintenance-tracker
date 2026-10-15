@@ -141,7 +141,7 @@ export default function VehicleDetail() {
           <Table.Thead>
             <Table.Tr>
               <Table.Th>Date</Table.Th><Table.Th>Task</Table.Th><Table.Th>Mileage</Table.Th>
-              <Table.Th>Cost</Table.Th><Table.Th>Notes</Table.Th>
+              <Table.Th>Cost</Table.Th><Table.Th>Parts Used</Table.Th><Table.Th>Notes</Table.Th>
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
@@ -152,17 +152,15 @@ export default function VehicleDetail() {
                 <Table.Td>{log.mileage.toLocaleString()}</Table.Td>
                 <Table.Td>{log.cost ? `$${Number(log.cost).toFixed(2)}` : "—"}</Table.Td>
                 <Table.Td>
-                  {log.notes}
-                  {log.parts_used?.length ? (
-                    <Text size="xs" c="dimmed">
-                      Parts: {log.parts_used.map((p) => `${p.name} ×${p.quantity ?? 1}`).join(", ")}
-                    </Text>
-                  ) : null}
+                  {log.parts_used?.length
+                    ? log.parts_used.map((p) => `${p.name} ×${p.quantity ?? 1}`).join(", ")
+                    : "—"}
                 </Table.Td>
+                <Table.Td>{log.notes}</Table.Td>
               </Table.Tr>
             ))}
             {!logs?.length && (
-              <Table.Tr><Table.Td colSpan={5}><Text c="dimmed">No maintenance logged yet</Text></Table.Td></Table.Tr>
+              <Table.Tr><Table.Td colSpan={6}><Text c="dimmed">No maintenance logged yet</Text></Table.Td></Table.Tr>
             )}
           </Table.Tbody>
         </Table>
