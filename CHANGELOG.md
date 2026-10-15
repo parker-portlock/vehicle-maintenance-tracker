@@ -3,6 +3,17 @@
 All notable changes to this project are documented here.
 Format based on Keep a Changelog, adheres to Semantic Versioning.
 
+## [0.5.0] - 2026-10-14
+
+### Added
+- Maintenance log editing: edit icon on each log row opens the log modal pre-filled with the log's task, mileage, date, cost, notes, and parts
+- Maintenance log deletion on the vehicle detail page, with a confirmation prompt; parts used in the deleted log are returned to inventory
+- Parts list refreshes after a log is updated or deleted, so stock counts stay current
+
+### Changed
+- Log maintenance modal now handles both create and edit; title shows "Log Maintenance" or "Edit Maintenance Log"
+- Delete buttons for vehicles, logs, and tasks now render as trash icons instead of text buttons
+
 ## [0.4.1] - 2026-10-15
 
 ### Added
