@@ -3,22 +3,52 @@ import {
   ActionIcon, Badge, Button, Card, Group, Loader, Modal, NumberInput,
   Select, Stack, Table, Text, TextInput, Title, Alert,
 } from "@mantine/core";
-import { IconTrash } from "@tabler/icons-react";
+import { IconEdit, IconEye, IconTrash } from "@tabler/icons-react";
 import { Link } from "react-router-dom";
 import { useForm } from "@mantine/form";
-import { useCreateVehicle, useDeleteVehicle, useVehicles } from "../api/hooks";
+import {
+  useCreateVehicle, useDeleteVehicle, useUpdateVehicle, useVehicles,
+} from "../api/hooks";
+import type { Vehicle } from "../api/types";
 
 export default function VehicleList() {
   const { data: vehicles, isLoading } = useVehicles();
   const createVehicle = useCreateVehicle();
+  const updateVehicle = useUpdateVehicle();
   const deleteVehicle = useDeleteVehicle();
   const [opened, setOpened] = useState(false);
+  const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const form = useForm({
     initialValues: { make: "", model: "", type: "car", year: new Date().getFullYear(), vin: "", purchase_date: "" },
   });
+
+  const resetForm = () => {
+    form.reset();
+    setEditingVehicle(null);
+    setError(null);
+  };
+
+  const openCreate = () => {
+    resetForm();
+    setOpened(true);
+  };
+
+  const openEdit = (vehicle: Vehicle) => {
+    form.setValues({
+      make: vehicle.make,
+      model: vehicle.model,
+      type: vehicle.type,
+      year: vehicle.year,
+      vin: vehicle.vin ?? "",
+      purchase_date: vehicle.purchase_date ?? "",
+    });
+    setEditingVehicle(vehicle);
+    setError(null);
+    setOpened(true);
+  };
 
   const submit = form.onSubmit(async (values) => {
     // Prevent duplicate submissions
@@ -28,16 +58,22 @@ export default function VehicleList() {
     setError(null);
     
     try {
-      await createVehicle.mutateAsync({
+      const payload = {
         ...values,
         vin: values.vin || null,
         purchase_date: values.purchase_date || null,
-      });
+      };
+      if (editingVehicle) {
+        await updateVehicle.mutateAsync({ id: editingVehicle.id, ...payload });
+      } else {
+        await createVehicle.mutateAsync(payload);
+      }
       form.reset();
+      setEditingVehicle(null);
       setOpened(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An unknown error occurred");
-      console.error("Vehicle creation error:", err);
+      console.error("Vehicle creation/editing error:", err);
     } finally {
       setIsSubmitting(false);
     }
@@ -49,7 +85,7 @@ export default function VehicleList() {
     <Stack gap="lg">
       <Group justify="space-between">
         <Title order={2}>Vehicles</Title>
-        <Button onClick={() => setOpened(true)}>+ Add Vehicle</Button>
+        <Button onClick={() => openCreate()}>+ Add Vehicle</Button>
       </Group>
 
       <Card withBorder padding={0}>
@@ -69,9 +105,23 @@ export default function VehicleList() {
                 <Table.Td>{v.vin ?? "—"}</Table.Td>
                 <Table.Td>
                   <Group justify="flex-end">
-                    <Button size="xs" variant="light" component={Link} to={`/vehicles/${v.id}`}>
-                      View
-                    </Button>
+                    <ActionIcon
+                      variant="light"
+                      color="green"
+                      component={Link}
+                      to={`/vehicles/${v.id}`}
+                      aria-label={`View ${v.make} ${v.model}`}
+                    >
+                      <IconEye size={16} />
+                    </ActionIcon>
+                    <ActionIcon
+                      variant="light"
+                      color="blue"
+                      onClick={() => openEdit(v)}
+                      aria-label={`Edit ${v.make} ${v.model}`}
+                    >
+                      <IconEdit size={16} />
+                    </ActionIcon>
                     <ActionIcon
                       variant="light"
                       color="red"
@@ -91,7 +141,14 @@ export default function VehicleList() {
         </Table>
       </Card>
 
-      <Modal opened={opened} onClose={() => setOpened(false)} title="Add Vehicle">
+      <Modal
+        opened={opened}
+        onClose={() => {
+          setOpened(false);
+          resetForm();
+        }}
+        title={editingVehicle ? "Edit Vehicle" : "Add Vehicle"}
+      >
         <form onSubmit={submit}>
           <Stack gap="sm">
             {error && (
@@ -114,8 +171,8 @@ export default function VehicleList() {
               placeholder="YYYY-MM-DD"
               {...form.getInputProps("purchase_date")}
             />
-            <Button type="submit" loading={isSubmitting || createVehicle.isPending}>
-              Save
+            <Button type="submit" loading={isSubmitting || createVehicle.isPending || updateVehicle.isPending}>
+              {editingVehicle ? "Update Vehicle" : "Save"}
             </Button>
           </Stack>
         </form>
