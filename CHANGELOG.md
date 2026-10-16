@@ -6,21 +6,22 @@ Format based on Keep a Changelog, adheres to Semantic Versioning.
 ## [0.5.0] - 2026-10-15
 
 ### Added
-- Maintenance log editing: edit icon on each log row opens the log modal pre-filled with the log's task, mileage, date, cost, notes, and parts
-- Maintenance log deletion on the vehicle detail page, with a confirmation prompt; parts used in the deleted log are returned to inventory
-- Parts list refreshes after a log is updated or deleted, so stock counts stay current
+- Maintenance log editing (edit icon opens the modal pre-filled) and deletion with confirmation; parts from a deleted log return to inventory
+- Parts list refreshes after a log is updated or deleted
 - Labor cost tracking on maintenance logs via a new `labor_cost` column (alembic migration `0486810bc647`)
-- Log Maintenance form: separate "Parts Cost ($)" and "Labor Cost ($)" fields
-- Vehicle detail: split the single Cost column into separate "Parts Cost" and "Labor Cost" columns
-- Vehicle detail header: three spend badges — "Total Spent", "Parts Spent", "Labor Spent" (Total = Parts + Labor)
+- Log form: separate "Parts Cost" and "Labor Cost" fields
+- Vehicle detail: separate "Parts Cost" and "Labor Cost" columns; spend badges for Total, Parts, and Labor (Total = Parts + Labor)
+- Spending Trends graph below the maintenance log: cumulative cost over time for total, parts, and labor; null cost values not plotted
+- Graph: toggleable series (Total, Parts, Labor); time scale presets (last 30/90/180 days, last year, all time) or a custom start/end date range; line colors match the spend badges (total=teal, parts=blue, labor=violet)
 
 ### Changed
-- Log maintenance modal now handles both create and edit; title shows "Log Maintenance" or "Edit Maintenance Log"
-- Delete buttons for vehicles, logs, and tasks now render as trash icons instead of text buttons
-- Log Maintenance form: the "Cost" field is now labeled "Parts Cost"
+- Log maintenance modal handles both create and edit
+- Delete buttons for vehicles, logs, and tasks render as trash icons
+- Log form: "Cost" field relabeled "Parts Cost"
 
 ### Fixed
-- Creating a log via `task_name` dropped the resolved task id, causing a NOT NULL violation. The task id is now set back on the payload before insert
+- Creating a log via `task_name` dropped the resolved task id (NOT NULL violation); the task id is now set on the payload before insert
+- Calendar picker: month navigation arrows point correctly and out-of-month days are grayed out (imported the missing `@mantine/dates` stylesheet)
 
 ## [0.4.1] - 2026-10-15
 
