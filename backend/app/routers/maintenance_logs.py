@@ -7,10 +7,43 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Vehicle, MaintenanceTask, MaintenanceLog
-from app.schemas.maintenance_log import LogCreate, LogUpdate, LogOut
+from app.models import Vehicle, MaintenanceTask, MaintenanceLog, Part, LogPart
+from app.schemas.maintenance_log import (
+    LogCreate,
+    LogUpdate,
+    LogOut,
+    LogPartRef,
+)
 
 router = APIRouter(tags=["logs"])
+
+
+def _build_log_parts(db: Session, items: list[LogPartRef] | None) -> list[LogPart]:
+    """Validate a list of part references and build LogPart rows.
+
+    Duplicates are collapsed (last quantity wins) to respect the composite
+    primary key, and each part id must reference an existing inventory part.
+    """
+    if not items:
+        return []
+    seen: dict[UUID, LogPart] = {}
+    for item in items:
+        if db.get(Part, item.id) is None:
+            raise HTTPException(status_code=400, detail=f"Part not found: {item.id}")
+        seen[item.id] = LogPart(part_id=item.id, quantity=item.quantity)
+    return list(seen.values())
+
+
+def _apply_inventory_adjustments(db: Session, log_parts: list[LogPart], sign: int) -> None:
+    """Adjust each part's inventory quantity by the quantity in the log parts.
+
+    ``sign`` is -1 to consume stock (usage) or +1 to restore it. Stock never
+    goes below zero.
+    """
+    for lp in log_parts:
+        part = db.get(Part, lp.part_id)
+        if part and lp.quantity:
+            part.quantity = max(0, part.quantity + sign * lp.quantity)
 
 
 @router.get(
@@ -59,7 +92,10 @@ def create_log(
             )
             db.add(task)
             db.flush()  # Make sure we have the task ID in DB before continuing
-    
+
+        # Carry the resolved task id back onto the payload so the log row keeps it
+        payload.task_id = task_id
+
     # Check that either task_id or task_name is provided (but not both empty)
     if not task_id and not payload.task_name:
         raise HTTPException(status_code=422, detail="Either task_id or task_name must be provided")
@@ -69,14 +105,14 @@ def create_log(
         raise HTTPException(status_code=404, detail="Task not found")
 
     data = payload.model_dump()
-    # Remove task_name from data since it's not a field of MaintenanceLog
+    # Remove task_name and parts_used from data: parts live in the log_parts table
     data.pop("task_name", None)
-    
-    parts = data.pop("parts_used", None)
-    if parts is not None:
-        data["parts_used"] = {"items": parts}  # wrap list for JSONB
+    data.pop("parts_used", None)
 
     log = MaintenanceLog(vehicle_id=vehicle_id, **data)
+    log.parts_used.extend(_build_log_parts(db, payload.parts_used))
+    # Decrement inventory for the parts used in this log
+    _apply_inventory_adjustments(db, log.parts_used, sign=-1)
     db.add(log)
     db.commit()
     db.refresh(log)
@@ -120,12 +156,19 @@ def update_log(log_id: UUID, payload: LogUpdate, db: Session = Depends(get_db)):
         payload.task_id = task_id
 
     data = payload.model_dump(exclude_unset=True)
-    parts = data.pop("parts_used", None)
-    if parts is not None:
-        data["parts_used"] = {"items": parts}
+    data.pop("parts_used", None)
 
     for field, value in data.items():
         setattr(log, field, value)
+    # Only touch parts_used when the client explicitly provided it. Use the
+    # typed pydantic objects (payload.parts_used), not the dumped dicts.
+    if "parts_used" in payload.model_fields_set:
+        previous_parts = list(log.parts_used)
+        log.parts_used.clear()
+        log.parts_used.extend(_build_log_parts(db, payload.parts_used))
+        # Restore the previously consumed stock, then apply the new usage
+        _apply_inventory_adjustments(db, previous_parts, sign=1)
+        _apply_inventory_adjustments(db, log.parts_used, sign=-1)
     db.commit()
     db.refresh(log)
     return log
@@ -136,5 +179,7 @@ def delete_log(log_id: UUID, db: Session = Depends(get_db)):
     log = db.get(MaintenanceLog, log_id)
     if not log:
         raise HTTPException(status_code=404, detail="Log not found")
+    # Return the consumed inventory before the log's parts are cascade-deleted
+    _apply_inventory_adjustments(db, list(log.parts_used), sign=1)
     db.delete(log)  # cascades attachments
     db.commit()

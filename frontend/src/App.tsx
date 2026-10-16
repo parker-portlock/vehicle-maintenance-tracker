@@ -20,16 +20,16 @@ export default function App() {
         <Group justify="space-between" mb="xl">
           <Title order={3}>🔧 Vehicle Maintenance Tracker</Title>
           <Group gap="xl">
-            <UnstyledButton component={NavLink} to="/" style={({ isActive }) => linkStyle(isActive)}>
+            <UnstyledButton component={NavLink} to="/" style={(props: any) => linkStyle(props.isActive)}>
               Dashboard
             </UnstyledButton>
-            <UnstyledButton component={NavLink} to="/vehicles" style={({ isActive }) => linkStyle(isActive)}>
+            <UnstyledButton component={NavLink} to="/vehicles" style={(props: any) => linkStyle(props.isActive)}>
               Vehicles
             </UnstyledButton>
-            <UnstyledButton component={NavLink} to="/tasks" style={({ isActive }) => linkStyle(isActive)}>
+            <UnstyledButton component={NavLink} to="/tasks" style={(props: any) => linkStyle(props.isActive)}>
               Tasks
             </UnstyledButton>
-            <UnstyledButton component={NavLink} to="/inventory" style={({ isActive }) => linkStyle(isActive)}>
+            <UnstyledButton component={NavLink} to="/inventory" style={(props: any) => linkStyle(props.isActive)}>
               Inventory
             </UnstyledButton>
           </Group>

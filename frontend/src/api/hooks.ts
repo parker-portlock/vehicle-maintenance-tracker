@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "./client";
-import type { MaintenanceLog, MaintenanceTask, Vehicle, Part } from "./types";
+import type { MaintenanceLog, MaintenanceTask, Vehicle, Part, LogPartRef } from "./types";
 
 export function useVehicles() {
   return useQuery({
@@ -66,15 +66,60 @@ export function useCreateLog(vehicleId: string) {
       mileage: number;
       performed_on: string;
       cost?: number;
+      labor_cost?: number;
       notes?: string;
-      parts_used?: unknown[];
+      parts_used?: LogPartRef[] | null;
     }) =>
       apiFetch<MaintenanceLog>(`/api/v1/vehicles/${vehicleId}/logs`, {
         method: "POST",
         body: JSON.stringify(data),
       }),
-    onSuccess: () =>
-      qc.invalidateQueries({ queryKey: ["vehicles", vehicleId, "logs"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["vehicles", vehicleId, "logs"] });
+      // Parts used in the log decrement inventory, so refresh the parts list
+      qc.invalidateQueries({ queryKey: ["parts"] });
+    },
+  });
+}
+
+export function useUpdateLog(vehicleId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      logId,
+      ...data
+    }: {
+      logId: string;
+      task_id?: string;
+      mileage?: number;
+      performed_on?: string;
+      cost?: number;
+      labor_cost?: number;
+      notes?: string | null;
+      parts_used?: LogPartRef[] | null;
+    }) =>
+      apiFetch<MaintenanceLog>(`/api/v1/logs/${logId}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["vehicles", vehicleId, "logs"] });
+      // Parts used in the log change inventory, so refresh the parts list
+      qc.invalidateQueries({ queryKey: ["parts"] });
+    },
+  });
+}
+
+export function useDeleteLog(vehicleId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (logId: string) =>
+      fetch(`/api/v1/logs/${logId}`, { method: "DELETE" }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["vehicles", vehicleId, "logs"] });
+      // Deleting a log returns its parts to inventory, so refresh the parts list
+      qc.invalidateQueries({ queryKey: ["parts"] });
+    },
   });
 }
 
@@ -93,6 +138,27 @@ export function useCreateTask() {
         body: JSON.stringify(processedData),
       });
     },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+  });
+}
+
+export function useUpdateTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      ...data
+    }: {
+      id: string;
+      name?: string | null;
+      description?: string | null;
+      interval_miles?: number | null;
+      interval_months?: number | null;
+    }) =>
+      apiFetch<MaintenanceTask>(`/api/v1/tasks/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
   });
 }

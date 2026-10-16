@@ -4,7 +4,7 @@ from alembic import context
 
 from app.config import settings
 from app.database import Base
-from app.models import vehicle, maintenance_task, maintenance_log, attachment
+from app.models import vehicle, maintenance_task, maintenance_log, attachment, part, log_part
 
 config = context.config
 if config.config_file_name is not None:

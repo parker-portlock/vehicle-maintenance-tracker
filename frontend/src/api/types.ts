@@ -18,6 +18,21 @@ export interface MaintenanceTask {
   interval_months: number | null;
 }
 
+export interface LogPart {
+  // id is the referenced inventory part's id
+  id: string;
+  brand: string;
+  name: string;
+  category: string;
+  quantity: number | null;
+}
+
+// Payload shape accepted when writing a log's inventory parts
+export interface LogPartRef {
+  id: string;
+  quantity: number | null;
+}
+
 export interface MaintenanceLog {
   id: string;
   vehicle_id: string;
@@ -25,8 +40,9 @@ export interface MaintenanceLog {
   mileage: number;
   performed_on: string;
   cost: number | null;
+  labor_cost: number | null;
   notes: string | null;
-  parts_used: { items?: { name?: string; qty?: string }[] } | null;
+  parts_used: LogPart[] | null;
   created_at: string;
 }
 

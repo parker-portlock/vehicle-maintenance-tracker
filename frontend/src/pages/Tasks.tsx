@@ -1,20 +1,31 @@
 import { useState } from "react";
 import {
-  Badge, Button, Card, Group, Loader, Modal, NumberInput,
+  ActionIcon, Badge, Button, Card, Group, Loader, Modal, NumberInput,
   Select, Stack, Table, Text, TextInput, Title, Alert,
 } from "@mantine/core";
+import { IconEdit, IconTrash } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
-import { useTasks, useCreateTask, useDeleteTask } from "../api/hooks";
+import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from "../api/hooks";
+import type { MaintenanceTask } from "../api/types";
+
+type TaskFormValues = {
+  name: string;
+  description: string;
+  interval_miles: number | undefined;
+  interval_months: number | undefined;
+};
 
 export default function Tasks() {
   const { data: tasks, isLoading } = useTasks();
   const createTask = useCreateTask();
+  const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
   const [opened, setOpened] = useState(false);
+  const [editingTask, setEditingTask] = useState<MaintenanceTask | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const form = useForm({
+  const form = useForm<TaskFormValues>({
     initialValues: {
       name: "",
       description: "",
@@ -22,6 +33,29 @@ export default function Tasks() {
       interval_months: undefined,
     },
   });
+
+  const resetForm = () => {
+    form.reset();
+    setEditingTask(null);
+    setError(null);
+  };
+
+  const openCreate = () => {
+    resetForm();
+    setOpened(true);
+  };
+
+  const openEdit = (task: MaintenanceTask) => {
+    form.setValues({
+      name: task.name,
+      description: task.description ?? "",
+      interval_miles: task.interval_miles ?? undefined,
+      interval_months: task.interval_months ?? undefined,
+    });
+    setEditingTask(task);
+    setError(null);
+    setOpened(true);
+  };
 
   const submit = form.onSubmit(async (values) => {
     // Prevent duplicate submissions
@@ -31,8 +65,13 @@ export default function Tasks() {
     setError(null);
     
     try {
-      await createTask.mutateAsync(values);
+      if (editingTask) {
+        await updateTask.mutateAsync({ id: editingTask.id, ...values });
+      } else {
+        await createTask.mutateAsync(values);
+      }
       form.reset();
+      setEditingTask(null);
       setOpened(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An unknown error occurred");
@@ -48,7 +87,7 @@ export default function Tasks() {
     <Stack gap="lg">
       <Group justify="space-between">
         <Title order={2}>📋 Maintenance Tasks</Title>
-        <Button onClick={() => setOpened(true)}>+ Add Task</Button>
+        <Button onClick={() => openCreate()}>+ Add Task</Button>
       </Group>
 
       {error && (
@@ -89,10 +128,17 @@ export default function Tasks() {
                 </Table.Td>
                 <Table.Td>
                   <Group justify="flex-end">
-                    <Button
-                      size="xs"
-                      variant="subtle"
+                    <ActionIcon
+                      variant="light"
+                      onClick={() => openEdit(t)}
+                      aria-label={`Edit ${t.name}`}
+                    >
+                      <IconEdit size={16} />
+                    </ActionIcon>
+                    <ActionIcon
+                      variant="light"
                       color="red"
+                      aria-label={`Delete ${t.name}`}
                       onClick={async () => {
                         if (
                           confirm(
@@ -109,8 +155,8 @@ export default function Tasks() {
                         }
                       }}
                     >
-                      Delete
-                    </Button>
+                      <IconTrash size={16} />
+                    </ActionIcon>
                   </Group>
                 </Table.Td>
               </Table.Tr>
@@ -132,9 +178,9 @@ export default function Tasks() {
         opened={opened}
         onClose={() => {
           setOpened(false);
-          form.reset();
+          resetForm();
         }}
-        title="Add Task"
+        title={editingTask ? "Edit Task" : "Add Task"}
       >
         <form onSubmit={submit}>
           <Stack gap="sm">
@@ -166,8 +212,8 @@ export default function Tasks() {
                 {...form.getInputProps("interval_months")}
               />
             </Group>
-            <Button type="submit" loading={isSubmitting || createTask.isPending}>
-              Add Task
+            <Button type="submit" loading={isSubmitting || createTask.isPending || updateTask.isPending}>
+              {editingTask ? "Update Task" : "Add Task"}
             </Button>
           </Stack>
         </form>
