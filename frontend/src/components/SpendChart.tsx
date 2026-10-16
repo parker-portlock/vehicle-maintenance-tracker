@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Card, Chip, Group, NativeSelect, Stack, Text } from "@mantine/core";
+import { DatePickerInput } from "@mantine/dates";
 import { useMantineTheme } from "@mantine/core";
 import type { MaintenanceLog } from "../api/types";
 
@@ -15,11 +16,12 @@ const SERIES: { key: SeriesKey; label: string; color: MantineColor }[] = [
 ];
 
 const RANGE_OPTIONS = [
+  { value: "30", label: "Last 30 days" },
+  { value: "90", label: "Last 90 days" },
+  { value: "180", label: "Last 180 days" },
+  { value: "365", label: "Last year" },
   { value: "all", label: "All time" },
-  ...Array.from({ length: 10 }, (_, i) => {
-    const n = i + 1;
-    return { value: String(n), label: `Last ${n} year${n > 1 ? "s" : ""}` };
-  }),
+  { value: "custom", label: "Custom" },
 ];
 
 // Fixed viewBox; the SVG scales to the container width.
@@ -28,6 +30,7 @@ const H = 300;
 const MARGIN = { top: 16, right: 20, bottom: 34, left: 60 };
 const MS_PER_YEAR = 365.25 * 24 * 3600 * 1000;
 const MS_PER_MONTH = 30.44 * 24 * 3600 * 1000;
+const DAY_MS = 24 * 3600 * 1000;
 
 interface Point {
   date: number;
@@ -66,6 +69,8 @@ export default function SpendChart({ logs }: { logs: MaintenanceLog[] }) {
     labor: true,
   });
   const [range, setRange] = useState<string>("all");
+  // Custom start/end dates, used when range === "custom"
+  const [customRange, setCustomRange] = useState<[Date | null, Date | null]>([null, null]);
 
   const colors: Record<SeriesKey, string> = {
     total: theme.colors.teal[6],
@@ -76,8 +81,27 @@ export default function SpendChart({ logs }: { logs: MaintenanceLog[] }) {
   const toggle = (key: SeriesKey) =>
     setVisible((prev) => ({ ...prev, [key]: !prev[key] }));
 
-  const data = useMemo<Point[]>(() => {
+  // Time window: preset (last N days), all time, or a custom start/end range
+  const windowRange = useMemo(() => {
     const now = Date.now();
+    const firstLog = logs.length
+      ? Math.min(...logs.map((l) => new Date(`${l.performed_on}T00:00:00`).getTime()))
+      : now - MS_PER_MONTH;
+    if (range === "all") {
+      return { start: Math.min(firstLog, now - MS_PER_MONTH), end: now };
+    }
+    if (range === "custom") {
+      const start = customRange[0]
+        ? customRange[0].getTime()
+        : Math.min(firstLog, now - MS_PER_YEAR);
+      const endD = new Date(customRange[1] ? customRange[1].getTime() : now);
+      endD.setHours(23, 59, 59, 999);
+      return { start, end: endD.getTime() };
+    }
+    return { start: now - Number(range) * DAY_MS, end: now };
+  }, [range, customRange, logs]);
+
+  const data = useMemo<Point[]>(() => {
     const rows = [...logs]
       .map((l) => ({
         date: new Date(`${l.performed_on}T00:00:00`).getTime(),
@@ -85,8 +109,8 @@ export default function SpendChart({ logs }: { logs: MaintenanceLog[] }) {
         labor: l.labor_cost != null ? Number(l.labor_cost) : null,
       }))
       .sort((a, b) => a.date - b.date)
-      .filter((r) =>
-        range === "all" ? true : r.date >= now - Number(range) * MS_PER_YEAR
+      .filter(
+        (r) => r.date >= windowRange.start && r.date <= windowRange.end
       );
     // Lines plot the SUM: each point is the cumulative spend up to that date.
     // Logs with a null cost/labor_cost do not produce a point on that series.
@@ -104,15 +128,9 @@ export default function SpendChart({ logs }: { logs: MaintenanceLog[] }) {
         total: hasParts || hasLabor ? partsSum + laborSum : null,
       };
     });
-  }, [logs, range]);
+  }, [logs, windowRange]);
 
-  // X domain: fixed window for a selected range; otherwise span of the data.
-  const { xStart, xEnd } = useMemo(() => {
-    const now = Date.now();
-    if (range !== "all") return { xStart: now - Number(range) * MS_PER_YEAR, xEnd: now };
-    const first = data.length ? data[0].date : now - MS_PER_YEAR;
-    return { xStart: Math.min(first, now - MS_PER_MONTH), xEnd: now };
-  }, [data, range]);
+  const { start: xStart, end: xEnd } = windowRange;
 
   // Y domain: 0..nice(max of visible series)
   const yMax = useMemo(() => {
@@ -171,12 +189,34 @@ export default function SpendChart({ logs }: { logs: MaintenanceLog[] }) {
             ))}
             <Text size="sm" c="dimmed">Time scale</Text>
             <NativeSelect
-              w={140}
+              w={150}
               value={range}
-              onChange={(e) => setRange(e.target.value)}
+              onChange={(e) => {
+                const v = e.target.value;
+                setRange(v);
+                if (v === "custom" && (!customRange[0] || !customRange[1])) {
+                  const first = logs.length
+                    ? new Date(
+                        Math.min(
+                          ...logs.map((l) => new Date(`${l.performed_on}T00:00:00`).getTime())
+                        )
+                      )
+                    : new Date(Date.now() - MS_PER_YEAR);
+                  setCustomRange([first, new Date()]);
+                }
+              }}
               data={RANGE_OPTIONS}
               aria-label="Time scale"
             />
+            {range === "custom" && (
+              <DatePickerInput
+                type="range"
+                label="Custom range"
+                value={customRange}
+                onChange={(v) => setCustomRange(v as [Date | null, Date | null])}
+                clearable={false}
+              />
+            )}
           </Group>
         </Group>
 
