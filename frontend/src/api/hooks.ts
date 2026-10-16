@@ -66,6 +66,7 @@ export function useCreateLog(vehicleId: string) {
       mileage: number;
       performed_on: string;
       cost?: number;
+      labor_cost?: number;
       notes?: string;
       parts_used?: LogPartRef[] | null;
     }) =>
@@ -93,6 +94,7 @@ export function useUpdateLog(vehicleId: string) {
       mileage?: number;
       performed_on?: string;
       cost?: number;
+      labor_cost?: number;
       notes?: string | null;
       parts_used?: LogPartRef[] | null;
     }) =>

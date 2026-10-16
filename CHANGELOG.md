@@ -3,6 +3,20 @@
 All notable changes to this project are documented here.
 Format based on Keep a Changelog, adheres to Semantic Versioning.
 
+## [0.6.0] - 2026-10-15
+
+### Added
+- Labor cost tracking on maintenance logs via a new `labor_cost` column (alembic migration `0486810bc647`).
+- Log Maintenance form: separate "Parts Cost ($)" and "Labor Cost ($)" fields.
+- Vehicle detail: split the single Cost column into separate "Parts Cost" and "Labor Cost" columns.
+- Vehicle detail header: three spend badges — "Total Spent", "Parts Spent", "Labor Spent" (Total = Parts + Labor).
+
+### Changed
+- Log Maintenance form: the "Cost" field is now labeled "Parts Cost".
+
+### Fixed
+- Creating a log via `task_name` dropped the resolved task id, causing a NOT NULL violation. The task id is now set back on the payload before insert.
+
 ## [0.5.0] - 2026-10-14
 
 ### Added

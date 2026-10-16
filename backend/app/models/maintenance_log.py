@@ -25,6 +25,7 @@ class MaintenanceLog(Base):
     notes: Mapped[str | None] = mapped_column(String)
     performed_on: Mapped[date] = mapped_column(Date, nullable=False)
     cost: Mapped[Decimal | None] = mapped_column(Numeric(10, 2))
+    labor_cost: Mapped[Decimal | None] = mapped_column(Numeric(10, 2))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

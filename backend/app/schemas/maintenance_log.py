@@ -33,6 +33,7 @@ class LogCreate(BaseModel):
     mileage: int = Field(ge=0)
     performed_on: date
     cost: Decimal | None = Field(default=None, ge=0)
+    labor_cost: Decimal | None = Field(default=None, ge=0)
     notes: str | None = None
     parts_used: list[LogPartRef] | None = None
 
@@ -43,6 +44,7 @@ class LogUpdate(BaseModel):
     mileage: int | None = Field(default=None, ge=0)
     performed_on: date | None = None
     cost: Decimal | None = Field(default=None, ge=0)
+    labor_cost: Decimal | None = Field(default=None, ge=0)
     notes: str | None = None
     parts_used: list[LogPartRef] | None = None
 
@@ -56,6 +58,7 @@ class LogOut(BaseModel):
     mileage: int
     performed_on: date
     cost: Decimal | None
+    labor_cost: Decimal | None
     notes: str | None
     parts_used: list[LogPartOut]
     created_at: datetime

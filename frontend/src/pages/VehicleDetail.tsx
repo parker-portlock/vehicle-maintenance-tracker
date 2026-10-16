@@ -40,7 +40,7 @@ export default function VehicleDetail() {
 
   const form = useForm({
     initialValues: {
-      task_id: "", mileage: 0, performed_on: "", cost: "", notes: "",
+      task_id: "", mileage: 0, performed_on: "", cost: "", labor_cost: "", notes: "",
     },
   });
 
@@ -49,10 +49,15 @@ export default function VehicleDetail() {
     [tasks]
   );
 
-  const totalSpend = useMemo(
+  const partsSpend = useMemo(
     () => (logs ?? []).reduce((sum, l) => sum + (l.cost ? Number(l.cost) : 0), 0),
     [logs]
   );
+  const laborSpend = useMemo(
+    () => (logs ?? []).reduce((sum, l) => sum + (l.labor_cost ? Number(l.labor_cost) : 0), 0),
+    [logs]
+  );
+  const totalSpend = useMemo(() => partsSpend + laborSpend, [partsSpend, laborSpend]);
 
   const latestMileage = useMemo(() => {
     const sorted = [...(logs ?? [])].sort((a, b) => b.mileage - a.mileage);
@@ -103,6 +108,7 @@ export default function VehicleDetail() {
       mileage: log.mileage,
       performed_on: log.performed_on,
       cost: log.cost != null ? String(log.cost) : "",
+      labor_cost: log.labor_cost != null ? String(log.labor_cost) : "",
       notes: log.notes ?? "",
     });
     setSelectedParts(
@@ -145,6 +151,7 @@ export default function VehicleDetail() {
         mileage: values.mileage,
         performed_on: values.performed_on,
         cost: values.cost ? Number(values.cost) : undefined,
+        labor_cost: values.labor_cost ? Number(values.labor_cost) : undefined,
         notes: values.notes || null,
         // Always send parts in edit mode so removals are applied to the log
         parts_used: selectedParts,
@@ -155,6 +162,7 @@ export default function VehicleDetail() {
         mileage: values.mileage,
         performed_on: values.performed_on,
         cost: values.cost ? Number(values.cost) : undefined,
+        labor_cost: values.labor_cost ? Number(values.labor_cost) : undefined,
         notes: values.notes || undefined,
         parts_used: selectedParts.length ? selectedParts : null,
       });
@@ -181,7 +189,9 @@ export default function VehicleDetail() {
             {latestMileage !== undefined && (
               <Badge variant="outline" color="grape">{latestMileage.toLocaleString()} mi</Badge>
             )}
-            <Badge variant="outline" color="teal">${totalSpend.toFixed(2)} spent</Badge>
+            <Badge variant="outline" color="teal">Total Spent: ${totalSpend.toFixed(2)}</Badge>
+            <Badge variant="outline" color="blue">Parts Spent: ${partsSpend.toFixed(2)}</Badge>
+            <Badge variant="outline" color="violet">Labor Spent: ${laborSpend.toFixed(2)}</Badge>
           </Group>
         </div>
         <Button onClick={() => openCreate()}>+ Log Maintenance</Button>
@@ -192,7 +202,7 @@ export default function VehicleDetail() {
           <Table.Thead>
             <Table.Tr>
               <Table.Th>Date</Table.Th><Table.Th>Task</Table.Th><Table.Th>Mileage</Table.Th>
-              <Table.Th>Cost</Table.Th><Table.Th>Parts Used</Table.Th><Table.Th>Notes</Table.Th><Table.Th />
+              <Table.Th>Parts Cost</Table.Th><Table.Th>Labor Cost</Table.Th><Table.Th>Parts Used</Table.Th><Table.Th>Notes</Table.Th><Table.Th />
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
@@ -202,6 +212,7 @@ export default function VehicleDetail() {
                 <Table.Td>{log.task.name}</Table.Td>
                 <Table.Td>{log.mileage.toLocaleString()}</Table.Td>
                 <Table.Td>{log.cost ? `$${Number(log.cost).toFixed(2)}` : "—"}</Table.Td>
+                <Table.Td>{log.labor_cost ? `$${Number(log.labor_cost).toFixed(2)}` : "—"}</Table.Td>
                 <Table.Td>
                   {log.parts_used?.length
                     ? log.parts_used.map((p) => `${p.name} ×${p.quantity ?? 1}`).join(", ")
@@ -231,7 +242,7 @@ export default function VehicleDetail() {
               </Table.Tr>
             ))}
             {!logs?.length && (
-              <Table.Tr><Table.Td colSpan={7}><Text c="dimmed">No maintenance logged yet</Text></Table.Td></Table.Tr>
+              <Table.Tr><Table.Td colSpan={8}><Text c="dimmed">No maintenance logged yet</Text></Table.Td></Table.Tr>
             )}
           </Table.Tbody>
         </Table>
@@ -268,7 +279,8 @@ export default function VehicleDetail() {
               placeholder="YYYY-MM-DD"
               {...form.getInputProps("performed_on")}
             />
-            <NumberInput label="Cost ($)" min={0} decimalScale={2} {...form.getInputProps("cost")} />
+            <NumberInput label="Parts Cost ($)" min={0} decimalScale={2} {...form.getInputProps("cost")} />
+            <NumberInput label="Labor Cost ($)" min={0} decimalScale={2} {...form.getInputProps("labor_cost")} />
             <Textarea label="Notes" autosize minRows={2} {...form.getInputProps("notes")} />
             {/* Inventory Used */}
             <Stack gap="xs" mt="xs">
