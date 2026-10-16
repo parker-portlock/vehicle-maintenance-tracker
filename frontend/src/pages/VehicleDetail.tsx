@@ -4,12 +4,13 @@ import {
   ActionIcon, Badge, Button, Card, Group, Loader, Modal, NativeSelect,
   NumberInput, Select, Stack, Table, Text, Textarea, TextInput, Title,
 } from "@mantine/core";
-import { IconPlus, IconX } from "@tabler/icons-react";
+import { IconEdit, IconPlus, IconTrash, IconX } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
 import {
-  useCreateLog, useCreateTask, useParts, useTasks, useVehicle, useVehicleLogs,
+  useCreateLog, useCreateTask, useDeleteLog, useParts, useTasks, useUpdateLog, useVehicle, useVehicleLogs,
 } from "../api/hooks";
-import type { LogPartRef, Part } from "../api/types";
+import type { LogPartRef, MaintenanceLog, Part } from "../api/types";
+import SpendChart from "../components/SpendChart";
 
 export default function VehicleDetail() {
   const { id } = useParams<{ id: string }>();
@@ -17,9 +18,12 @@ export default function VehicleDetail() {
   const { data: logs, isLoading: lLoading } = useVehicleLogs(id!);
   const { data: tasks } = useTasks();
   const createLog = useCreateLog(id!);
+  const updateLog = useUpdateLog(id!);
+  const deleteLog = useDeleteLog(id!);
   const createTask = useCreateTask();
   const { data: parts } = useParts();
   const [opened, setOpened] = useState(false);
+  const [editingLog, setEditingLog] = useState<MaintenanceLog | null>(null);
 
   // Inventory parts used in this log (managed outside the Mantine form)
   const [selectedParts, setSelectedParts] = useState<LogPartRef[]>([]);
@@ -37,7 +41,7 @@ export default function VehicleDetail() {
 
   const form = useForm({
     initialValues: {
-      task_id: "", mileage: 0, performed_on: "", cost: "", notes: "",
+      task_id: "", mileage: 0, performed_on: "", cost: "", labor_cost: "", notes: "",
     },
   });
 
@@ -46,10 +50,15 @@ export default function VehicleDetail() {
     [tasks]
   );
 
-  const totalSpend = useMemo(
+  const partsSpend = useMemo(
     () => (logs ?? []).reduce((sum, l) => sum + (l.cost ? Number(l.cost) : 0), 0),
     [logs]
   );
+  const laborSpend = useMemo(
+    () => (logs ?? []).reduce((sum, l) => sum + (l.labor_cost ? Number(l.labor_cost) : 0), 0),
+    [logs]
+  );
+  const totalSpend = useMemo(() => partsSpend + laborSpend, [partsSpend, laborSpend]);
 
   const latestMileage = useMemo(() => {
     const sorted = [...(logs ?? [])].sort((a, b) => b.mileage - a.mileage);
@@ -86,6 +95,41 @@ export default function VehicleDetail() {
     setPartQty(1);
   };
 
+  const openCreate = () => {
+    setEditingLog(null);
+    form.reset();
+    resetParts();
+    setOpened(true);
+  };
+
+  const openEdit = (log: MaintenanceLog) => {
+    setEditingLog(log);
+    form.setValues({
+      task_id: log.task.id,
+      mileage: log.mileage,
+      performed_on: log.performed_on,
+      cost: log.cost != null ? String(log.cost) : "",
+      labor_cost: log.labor_cost != null ? String(log.labor_cost) : "",
+      notes: log.notes ?? "",
+    });
+    setSelectedParts(
+      (log.parts_used ?? []).map((p) => ({ id: p.id, quantity: p.quantity }))
+    );
+    setPartToAdd(null);
+    setPartQty(1);
+    setOpened(true);
+  };
+
+  const handleDeleteLog = (log: MaintenanceLog) => {
+    if (
+      confirm(
+        `Delete this "${log.task.name}" log?\n\nParts used in this log will be returned to inventory.`
+      )
+    ) {
+      deleteLog.mutate(log.id);
+    }
+  };
+
   const submit = form.onSubmit(async (values) => {
     let task_id = values.task_id;
     // "new:<name>" is the create-new-task option - this will be handled by the backend
@@ -101,15 +145,31 @@ export default function VehicleDetail() {
       return;
     }
     
-    await createLog.mutateAsync({
-      task_id,
-      mileage: values.mileage,
-      performed_on: values.performed_on,
-      cost: values.cost ? Number(values.cost) : undefined,
-      notes: values.notes || undefined,
-      parts_used: selectedParts.length ? selectedParts : null,
-    });
+    if (editingLog) {
+      await updateLog.mutateAsync({
+        logId: editingLog.id,
+        task_id,
+        mileage: values.mileage,
+        performed_on: values.performed_on,
+        cost: values.cost ? Number(values.cost) : undefined,
+        labor_cost: values.labor_cost ? Number(values.labor_cost) : undefined,
+        notes: values.notes || null,
+        // Always send parts in edit mode so removals are applied to the log
+        parts_used: selectedParts,
+      });
+    } else {
+      await createLog.mutateAsync({
+        task_id,
+        mileage: values.mileage,
+        performed_on: values.performed_on,
+        cost: values.cost ? Number(values.cost) : undefined,
+        labor_cost: values.labor_cost ? Number(values.labor_cost) : undefined,
+        notes: values.notes || undefined,
+        parts_used: selectedParts.length ? selectedParts : null,
+      });
+    }
     
+    setEditingLog(null);
     form.reset();
     resetParts();
     setOpened(false);
@@ -130,10 +190,12 @@ export default function VehicleDetail() {
             {latestMileage !== undefined && (
               <Badge variant="outline" color="grape">{latestMileage.toLocaleString()} mi</Badge>
             )}
-            <Badge variant="outline" color="teal">${totalSpend.toFixed(2)} spent</Badge>
+            <Badge variant="outline" color="teal">Total Spent: ${totalSpend.toFixed(2)}</Badge>
+            <Badge variant="outline" color="blue">Parts Spent: ${partsSpend.toFixed(2)}</Badge>
+            <Badge variant="outline" color="violet">Labor Spent: ${laborSpend.toFixed(2)}</Badge>
           </Group>
         </div>
-        <Button onClick={() => setOpened(true)}>+ Log Maintenance</Button>
+        <Button onClick={() => openCreate()}>+ Log Maintenance</Button>
       </Group>
 
       <Card withBorder padding={0}>
@@ -141,7 +203,7 @@ export default function VehicleDetail() {
           <Table.Thead>
             <Table.Tr>
               <Table.Th>Date</Table.Th><Table.Th>Task</Table.Th><Table.Th>Mileage</Table.Th>
-              <Table.Th>Cost</Table.Th><Table.Th>Parts Used</Table.Th><Table.Th>Notes</Table.Th>
+              <Table.Th>Parts Cost</Table.Th><Table.Th>Labor Cost</Table.Th><Table.Th>Parts Used</Table.Th><Table.Th>Notes</Table.Th><Table.Th />
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
@@ -151,22 +213,56 @@ export default function VehicleDetail() {
                 <Table.Td>{log.task.name}</Table.Td>
                 <Table.Td>{log.mileage.toLocaleString()}</Table.Td>
                 <Table.Td>{log.cost ? `$${Number(log.cost).toFixed(2)}` : "—"}</Table.Td>
+                <Table.Td>{log.labor_cost ? `$${Number(log.labor_cost).toFixed(2)}` : "—"}</Table.Td>
                 <Table.Td>
                   {log.parts_used?.length
                     ? log.parts_used.map((p) => `${p.name} ×${p.quantity ?? 1}`).join(", ")
                     : "—"}
                 </Table.Td>
                 <Table.Td>{log.notes}</Table.Td>
+                <Table.Td>
+                  <Group justify="flex-end">
+                    <ActionIcon
+                      variant="light"
+                      color="blue"
+                      onClick={() => openEdit(log)}
+                      aria-label={`Edit ${log.task.name} log`}
+                    >
+                      <IconEdit size={16} />
+                    </ActionIcon>
+                    <ActionIcon
+                      variant="light"
+                      color="red"
+                      onClick={() => handleDeleteLog(log)}
+                      aria-label={`Delete ${log.task.name} log`}
+                    >
+                      <IconTrash size={16} />
+                    </ActionIcon>
+                  </Group>
+                </Table.Td>
+                <Table.Td>{log.notes}</Table.Td>
               </Table.Tr>
             ))}
             {!logs?.length && (
-              <Table.Tr><Table.Td colSpan={6}><Text c="dimmed">No maintenance logged yet</Text></Table.Td></Table.Tr>
+              <Table.Tr><Table.Td colSpan={8}><Text c="dimmed">No maintenance logged yet</Text></Table.Td></Table.Tr>
             )}
           </Table.Tbody>
         </Table>
       </Card>
 
-      <Modal opened={opened} onClose={() => setOpened(false)} title="Log Maintenance" size="lg">
+      <SpendChart logs={logs ?? []} />
+
+      <Modal
+        opened={opened}
+        onClose={() => {
+          setOpened(false);
+          setEditingLog(null);
+          form.reset();
+          resetParts();
+        }}
+        title={editingLog ? "Edit Maintenance Log" : "Log Maintenance"}
+        size="lg"
+      >
         <form onSubmit={submit}>
           <Stack gap="sm">
             <NativeSelect
@@ -187,7 +283,8 @@ export default function VehicleDetail() {
               placeholder="YYYY-MM-DD"
               {...form.getInputProps("performed_on")}
             />
-            <NumberInput label="Cost ($)" min={0} decimalScale={2} {...form.getInputProps("cost")} />
+            <NumberInput label="Parts Cost ($)" min={0} decimalScale={2} {...form.getInputProps("cost")} />
+            <NumberInput label="Labor Cost ($)" min={0} decimalScale={2} {...form.getInputProps("labor_cost")} />
             <Textarea label="Notes" autosize minRows={2} {...form.getInputProps("notes")} />
             {/* Inventory Used */}
             <Stack gap="xs" mt="xs">
@@ -261,7 +358,7 @@ export default function VehicleDetail() {
               </Group>
             </Stack>
 
-            <Button type="submit" loading={createLog.isPending}>Save</Button>
+            <Button type="submit" loading={createLog.isPending || updateLog.isPending}>{editingLog ? "Save Changes" : "Save"}</Button>
           </Stack>
         </form>
       </Modal>

@@ -70,7 +70,7 @@ export default function Inventory() {
       // Handle empty capacity values by converting to null
       const processedValues = {
         ...values,
-        capacity: values.capacity === "" ? null : values.capacity
+        capacity: (values.capacity as string | number | null) === "" ? null : values.capacity
       };
 
       if (editingPart) {

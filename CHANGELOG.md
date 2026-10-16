@@ -3,6 +3,26 @@
 All notable changes to this project are documented here.
 Format based on Keep a Changelog, adheres to Semantic Versioning.
 
+## [0.5.0] - 2026-10-15
+
+### Added
+- Maintenance log editing (edit icon opens the modal pre-filled) and deletion with confirmation; parts from a deleted log return to inventory
+- Parts list refreshes after a log is updated or deleted
+- Labor cost tracking on maintenance logs via a new `labor_cost` column (alembic migration `0486810bc647`)
+- Log form: separate "Parts Cost" and "Labor Cost" fields
+- Vehicle detail: separate "Parts Cost" and "Labor Cost" columns; spend badges for Total, Parts, and Labor (Total = Parts + Labor)
+- Spending Trends graph below the maintenance log: cumulative cost over time for total, parts, and labor; null cost values not plotted
+- Graph: toggleable series (Total, Parts, Labor); time scale presets (last 30/90/180 days, last year, all time) or a custom start/end date range; line colors match the spend badges (total=teal, parts=blue, labor=violet)
+
+### Changed
+- Log maintenance modal handles both create and edit
+- Delete buttons for vehicles, logs, and tasks render as trash icons
+- Log form: "Cost" field relabeled "Parts Cost"
+
+### Fixed
+- Creating a log via `task_name` dropped the resolved task id (NOT NULL violation); the task id is now set on the payload before insert
+- Calendar picker: month navigation arrows point correctly and out-of-month days are grayed out (imported the missing `@mantine/dates` stylesheet)
+
 ## [0.4.1] - 2026-10-15
 
 ### Added

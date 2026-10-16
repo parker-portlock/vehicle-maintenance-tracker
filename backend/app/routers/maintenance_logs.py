@@ -92,7 +92,10 @@ def create_log(
             )
             db.add(task)
             db.flush()  # Make sure we have the task ID in DB before continuing
-    
+
+        # Carry the resolved task id back onto the payload so the log row keeps it
+        payload.task_id = task_id
+
     # Check that either task_id or task_name is provided (but not both empty)
     if not task_id and not payload.task_name:
         raise HTTPException(status_code=422, detail="Either task_id or task_name must be provided")

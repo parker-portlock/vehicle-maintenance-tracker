@@ -1,8 +1,9 @@
 import { useState } from "react";
 import {
-  Badge, Button, Card, Group, Loader, Modal, NumberInput,
+  ActionIcon, Badge, Button, Card, Group, Loader, Modal, NumberInput,
   Select, Stack, Table, Text, TextInput, Title, Alert,
 } from "@mantine/core";
+import { IconTrash } from "@tabler/icons-react";
 import { Link } from "react-router-dom";
 import { useForm } from "@mantine/form";
 import { useCreateVehicle, useDeleteVehicle, useVehicles } from "../api/hooks";
@@ -71,17 +72,17 @@ export default function VehicleList() {
                     <Button size="xs" variant="light" component={Link} to={`/vehicles/${v.id}`}>
                       View
                     </Button>
-                    <Button
-                      size="xs"
-                      variant="subtle"
+                    <ActionIcon
+                      variant="light"
                       color="red"
+                      aria-label={`Delete ${v.make} ${v.model}`}
                       onClick={() => {
                         if (confirm(`Delete ${v.make} ${v.model}? Logs and attachments go too.`))
                           deleteVehicle.mutate(v.id);
                       }}
                     >
-                      Delete
-                    </Button>
+                      <IconTrash size={16} />
+                    </ActionIcon>
                   </Group>
                 </Table.Td>
               </Table.Tr>

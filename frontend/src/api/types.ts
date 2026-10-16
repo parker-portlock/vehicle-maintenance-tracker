@@ -40,6 +40,7 @@ export interface MaintenanceLog {
   mileage: number;
   performed_on: string;
   cost: number | null;
+  labor_cost: number | null;
   notes: string | null;
   parts_used: LogPart[] | null;
   created_at: string;
