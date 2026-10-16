@@ -3,6 +3,11 @@
 All notable changes to this project are documented here.
 Format based on Keep a Changelog, adheres to Semantic Versioning.
 
+## [0.6.1] - 2026-10-16
+
+### Changed
+- Log Maintenance form: "Performed On" field uses a calendar picker widget (Mantine `DatePickerInput`, value format `YYYY-MM-DD`) instead of a text field; required-date validation added; `@mantine/dates` and `dayjs` were already in the dependency set
+
 ## [0.6.0] - 2026-10-16
 
 ### Added
