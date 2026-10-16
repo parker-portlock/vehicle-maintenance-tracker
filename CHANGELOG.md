@@ -3,30 +3,24 @@
 All notable changes to this project are documented here.
 Format based on Keep a Changelog, adheres to Semantic Versioning.
 
-## [0.6.0] - 2026-10-15
-
-### Added
-- Labor cost tracking on maintenance logs via a new `labor_cost` column (alembic migration `0486810bc647`).
-- Log Maintenance form: separate "Parts Cost ($)" and "Labor Cost ($)" fields.
-- Vehicle detail: split the single Cost column into separate "Parts Cost" and "Labor Cost" columns.
-- Vehicle detail header: three spend badges — "Total Spent", "Parts Spent", "Labor Spent" (Total = Parts + Labor).
-
-### Changed
-- Log Maintenance form: the "Cost" field is now labeled "Parts Cost".
-
-### Fixed
-- Creating a log via `task_name` dropped the resolved task id, causing a NOT NULL violation. The task id is now set back on the payload before insert.
-
-## [0.5.0] - 2026-10-14
+## [0.5.0] - 2026-10-15
 
 ### Added
 - Maintenance log editing: edit icon on each log row opens the log modal pre-filled with the log's task, mileage, date, cost, notes, and parts
 - Maintenance log deletion on the vehicle detail page, with a confirmation prompt; parts used in the deleted log are returned to inventory
 - Parts list refreshes after a log is updated or deleted, so stock counts stay current
+- Labor cost tracking on maintenance logs via a new `labor_cost` column (alembic migration `0486810bc647`)
+- Log Maintenance form: separate "Parts Cost ($)" and "Labor Cost ($)" fields
+- Vehicle detail: split the single Cost column into separate "Parts Cost" and "Labor Cost" columns
+- Vehicle detail header: three spend badges — "Total Spent", "Parts Spent", "Labor Spent" (Total = Parts + Labor)
 
 ### Changed
 - Log maintenance modal now handles both create and edit; title shows "Log Maintenance" or "Edit Maintenance Log"
 - Delete buttons for vehicles, logs, and tasks now render as trash icons instead of text buttons
+- Log Maintenance form: the "Cost" field is now labeled "Parts Cost"
+
+### Fixed
+- Creating a log via `task_name` dropped the resolved task id, causing a NOT NULL violation. The task id is now set back on the payload before insert
 
 ## [0.4.1] - 2026-10-15
 
