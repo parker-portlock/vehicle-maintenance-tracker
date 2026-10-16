@@ -240,6 +240,7 @@ export default function VehicleDetail() {
                     </ActionIcon>
                   </Group>
                 </Table.Td>
+                <Table.Td>{log.notes}</Table.Td>
               </Table.Tr>
             ))}
             {!logs?.length && (
