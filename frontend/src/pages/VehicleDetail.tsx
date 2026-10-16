@@ -10,6 +10,7 @@ import {
   useCreateLog, useCreateTask, useDeleteLog, useParts, useTasks, useUpdateLog, useVehicle, useVehicleLogs,
 } from "../api/hooks";
 import type { LogPartRef, MaintenanceLog, Part } from "../api/types";
+import SpendChart from "../components/SpendChart";
 
 export default function VehicleDetail() {
   const { id } = useParams<{ id: string }>();
@@ -247,6 +248,8 @@ export default function VehicleDetail() {
           </Table.Tbody>
         </Table>
       </Card>
+
+      <SpendChart logs={logs ?? []} />
 
       <Modal
         opened={opened}
