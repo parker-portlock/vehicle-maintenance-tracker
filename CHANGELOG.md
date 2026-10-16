@@ -3,6 +3,15 @@
 All notable changes to this project are documented here.
 Format based on Keep a Changelog, adheres to Semantic Versioning.
 
+## [0.6.0] - 2026-10-16
+
+### Added
+- Dark/light mode toggle: icon button at the top right of the header (moon/sun); preference persists across reloads via the browser's localStorage
+- Version watermark next to the app title on every page; version injected at build time from the repo-root `VERSION` file
+
+### Fixed
+- `npm run build` (tsc step) emitted stray compiled `.js` files beside every source file; added `noEmit: true` to `frontend/tsconfig.json` so tsc type-checks only
+
 ## [0.5.0] - 2026-10-15
 
 ### Added
