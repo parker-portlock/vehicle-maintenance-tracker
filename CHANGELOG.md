@@ -3,6 +3,11 @@
 All notable changes to this project are documented here.
 Format based on Keep a Changelog, adheres to Semantic Versioning.
 
+## [0.6.2] - 2026-10-16
+
+### Fixed
+- Vehicle detail log table: removed a duplicated "Notes" cell that rendered after the edit/delete icons in each row
+
 ## [0.6.1] - 2026-10-16
 
 ### Added
