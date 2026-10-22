@@ -3,6 +3,19 @@
 All notable changes to this project are documented here.
 Format based on Keep a Changelog, adheres to Semantic Versioning.
 
+## [0.7.1] - 2026-10-22
+
+### Added
+- Docker deployment: one Alpine image runs the frontend and backend (nginx serves the static frontend and proxies `/api` to FastAPI); compose defines two services: `postgres:16-alpine` and the app image
+- Automatic database migrations at container startup (Alembic, retries until the database is ready)
+
+### Changed
+- Frontend API base URL is build-time configurable (`VITE_API_BASE_URL`); the Docker image uses same-origin requests
+- README rewritten for a single private user: Docker quick start, data backup/restore, developer notes
+
+### Removed
+- Separate `backend/Dockerfile` and `frontend/Dockerfile` (replaced by the single app image)
+
 ## [0.7.0] - 2026-10-22
 
 ### Added
