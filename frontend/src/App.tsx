@@ -5,6 +5,7 @@ import VehicleList from "./pages/VehicleList";
 import VehicleDetail from "./pages/VehicleDetail";
 import Tasks from "./pages/Tasks";
 import Inventory from "./pages/Inventory";
+import Settings from "./pages/Settings";
 import { ThemeToggle, VersionWatermark } from "./components";
 
 // Workaround for TypeScript issue with isActive property in Mantine v7
@@ -36,6 +37,9 @@ export default function App() {
             <UnstyledButton component={NavLink} to="/inventory" style={(props: any) => linkStyle(props.isActive)}>
               Inventory
             </UnstyledButton>
+            <UnstyledButton component={NavLink} to="/settings" style={(props: any) => linkStyle(props.isActive)}>
+              Settings
+            </UnstyledButton>
             <ThemeToggle />
           </Group>
         </Group>
@@ -45,6 +49,7 @@ export default function App() {
           <Route path="/vehicles/:id" element={<VehicleDetail />} />
           <Route path="/tasks" element={<Tasks />} />
           <Route path="/inventory" element={<Inventory />} />
+          <Route path="/settings" element={<Settings />} />
         </Routes>
       </Container>
     </>

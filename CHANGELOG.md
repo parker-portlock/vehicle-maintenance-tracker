@@ -3,6 +3,13 @@
 All notable changes to this project are documented here.
 Format based on Keep a Changelog, adheres to Semantic Versioning.
 
+## [0.7.0] - 2026-10-22
+
+### Added
+- Settings page (`/settings`) with header navigation link; Data section for database operations
+- Database backup: `GET /api/v1/backup/export` downloads the full database as one JSON file (`vmt-backup` format v1); all tables in foreign-key order; UUIDs, dates and decimals serialized as JSON primitives; "Download Backup" button in Settings
+- Database restore: `POST /api/v1/backup/restore` accepts a backup file upload and replaces all data; deletes in reverse foreign-key order and inserts in foreign-key order inside one transaction; any failure rolls back; invalid, unrecognized or incomplete files reject before any data change; Settings file picker with confirmation and per-table restored counts
+
 ## [0.6.2] - 2026-10-16
 
 ### Fixed
