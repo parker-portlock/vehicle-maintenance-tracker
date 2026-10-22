@@ -3,33 +3,29 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_DB: maintenance
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-    ports:
-      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d maintenance"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
-  backend:
-    build: ./backend
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: vehicle-maintenance-tracker:latest
     ports:
-      - "8000:8000"
-    env_file:
-      - ./backend/.env
+      - "${APP_PORT:-8080}:80"
+    environment:
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD:-postgres}@db:5432/maintenance
     depends_on:
       db:
         condition: service_healthy
-
-  frontend:
-    build: ./frontend
-    ports:
-      - "5173:5173"
-    depends_on:
-      - backend
+    restart: unless-stopped
 
 volumes:
   pgdata:
