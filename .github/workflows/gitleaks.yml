@@ -7,7 +7,8 @@ on:
     branches: [main, dev]
 
 jobs:
-  gitleaks:
+  scan:
+    name: gitleaks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -15,14 +16,12 @@ jobs:
           # Full history required for gitleaks to scan every commit
           fetch-depth: 0
 
-      # zizmor-secure is the active upstream of the gitleaks GitHub Action
-      # (the action repo under the "gitleaks" org was compromised in Oct 2025).
-      - uses: zizmor-secure/gitleaks@v2.3.0
+      # Official Gitleaks action (gitleaks/gitleaks-action).
+      # v3 = Node 24 runtime; required after GitHub retires Node 20 actions.
+      # License: free for personal accounts (this repo); org accounts
+      # must set the GITLEAKS_LICENSE secret.
+      # Pinned to the immutable, signature-verified v3.0.0 tag.
+      - uses: gitleaks/gitleaks-action@v3.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Generate job summary
-        if: always()
-        uses: zizmor-secure/gitleaks/job-summary@v2.3.0
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
