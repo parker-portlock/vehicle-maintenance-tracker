@@ -42,16 +42,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push backend image
+      - name: Build and push app image
         uses: docker/build-push-action@v6
         with:
-          context: ./backend
+          # Single app image (nginx + FastAPI + built frontend) built
+          # from the repo-root Dockerfile
+          context: .
+          file: Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository }}/backend:v${{ steps.version.outputs.VERSION }}
-
-      - name: Build and push frontend image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./frontend
-          push: true
-          tags: ghcr.io/${{ github.repository }}/frontend:v${{ steps.version.outputs.VERSION }}
+          tags: ghcr.io/${{ github.repository }}:v${{ steps.version.outputs.VERSION }}
