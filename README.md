@@ -1,11 +1,24 @@
 # Vehicle Maintenance Tracker
 
-*Track maintenance across multiple vehicles: maintenance logs, recurring tasks, a
-parts inventory with stock tracking, and a spending-trends graph.*
+[![License: Apache 2.0 with Commons Clause](https://img.shields.io/badge/license-Apache%202.0%20with%20Commons%20Clause-red.svg)](./LICENSE)
 
+Self-hosted vehicle maintenance tracking for individuals, small shops, and businesses.
+
+---
+
+## License
+
+Vehicle Maintenance Tracker (VMT) is **free to use, modify, and redistribute — including for commercial purposes** — under
+[Apache License 2.0 with Commons Clause](./LICENSE). You may not sell this software or any
+derivative of its source code. See [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) for
+third-party license attributions.
+
+If VMT is useful to you or your business, use it freely — that's the point.
+
+## *A note from the creator:*
 Hello! This is a side project of mine I have been wanting to build for a while. This maintenance tracking app allows you to create maintenance logs, track your maintenance across multiple vehicles, track parts and consumable inventory, and more!
 
-I felt like there was a gap I needed fill with keeping track of maintenance and parts inventory across my vehicles and garage. My goal with this is to build a straight-forward and useful tool that can give you insights into how often you have to maintain your vehicle and how much you are spending on it!
+I felt like there was a gap I needed fill with keeping track of maintenance and parts inventory across my vehicles and garage. My goal with this is to build a straight-forward and useful tool that can give you insights into how often you have to maintain your vehicle and how much you are spending on it.
 
 ***Necessary Disclaimers:***
 
