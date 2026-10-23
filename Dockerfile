@@ -43,6 +43,9 @@ COPY backend/alembic ./alembic
 COPY backend/alembic.ini ./
 COPY --from=web /src/dist /app/static
 COPY docker/nginx.conf /etc/nginx/http.d/app.conf
+# Alpine's stock default_server returns 404 for all requests and would
+# shadow our app server block
+RUN rm -f /etc/nginx/http.d/default.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 EXPOSE 80

@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-# Wait for PostgreSQL, then apply migrations (retry while the db starts up)
+# Apply migrations (retry while the database starts up)
 attempt=1
 until alembic upgrade head; do
     attempt=$((attempt + 1))
@@ -9,7 +9,7 @@ until alembic upgrade head; do
         echo "ERROR: database migrations failed after 30 attempts" >&2
         exit 1
     fi
-    echo "Database not ready yet (attempt ${attempt}), retrying in 2s..."
+    echo "Database migrations failed (attempt ${attempt}), retrying in 2s..."
     sleep 2
 done
 

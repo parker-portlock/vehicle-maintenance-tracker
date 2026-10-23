@@ -21,7 +21,7 @@ services:
     ports:
       - "${APP_PORT:-8080}:80"
     environment:
-      DATABASE_URL: postgresql://postgres:${DB_PASSWORD:-postgres}@db:5432/maintenance
+      DATABASE_URL: postgresql+psycopg2://postgres:${DB_PASSWORD:-postgres}@db:5432/maintenance
     depends_on:
       db:
         condition: service_healthy
