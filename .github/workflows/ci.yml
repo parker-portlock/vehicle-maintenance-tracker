@@ -24,12 +24,17 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/maintenance
+      # +psycopg2 dialect is required: the app ships psycopg2-binary, and
+      # SQLAlchemy 2.x resolves a plain postgresql:// URL to the psycopg
+      # (v3) driver, which is not installed
+      DATABASE_URL: postgresql+psycopg2://postgres:postgres@localhost:5432/maintenance
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          # Match the Docker runtime image (python:3.12-alpine) and the
+          # Python version the requirements locks were resolved with
+          python-version: "3.12"
       - name: Install backend
         run: |
           cd backend
