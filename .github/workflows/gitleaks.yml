@@ -1,0 +1,28 @@
+name: Gitleaks
+
+on:
+  pull_request:
+    branches: [main, dev]
+  push:
+    branches: [main, dev]
+
+jobs:
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # Full history required for gitleaks to scan every commit
+          fetch-depth: 0
+
+      # zizmor-secure is the active upstream of the gitleaks GitHub Action
+      # (the action repo under the "gitleaks" org was compromised in Oct 2025).
+      - uses: zizmor-secure/gitleaks@v2.3.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate job summary
+        if: always()
+        uses: zizmor-secure/gitleaks/job-summary@v2.3.0
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
