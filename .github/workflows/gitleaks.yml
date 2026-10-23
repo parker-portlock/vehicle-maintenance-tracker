@@ -1,0 +1,38 @@
+name: Gitleaks
+
+on:
+  pull_request:
+    branches: [main, dev]
+  push:
+    branches: [main, dev]
+
+# Explicit least-privilege token scopes. The action needs
+# pull-requests: read on PR events (GET /pulls/{n}/commits) — the repo
+# default token permissions had this scoped out, causing 403
+# "Resource not accessible by integration" on PR #15.
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  scan:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # Full history required for gitleaks to scan every commit
+          fetch-depth: 0
+
+      # Official Gitleaks action (gitleaks/gitleaks-action).
+      # v3 = Node 24 runtime; required after GitHub retires Node 20 actions.
+      # License: free for personal accounts (this repo); org accounts
+      # must set the GITLEAKS_LICENSE secret.
+      # Pinned to the immutable, signature-verified v3.0.0 tag.
+      - uses: gitleaks/gitleaks-action@v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Use the latest verified release (8.30.1) instead of the
+          # action's hard-coded 8.24.3
+          GITLEAKS_VERSION: "8.30.1"
+

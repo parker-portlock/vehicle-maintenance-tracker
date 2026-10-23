@@ -48,6 +48,29 @@ export function useCreateVehicle() {
   });
 }
 
+export function useUpdateVehicle() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      ...data
+    }: {
+      id: string;
+      make?: string | null;
+      model?: string | null;
+      type?: string | null;
+      year?: number | null;
+      vin?: string | null;
+      purchase_date?: string | null;
+    }) =>
+      apiFetch<Vehicle>(`/api/v1/vehicles/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["vehicles"] }),
+  });
+}
+
 export function useDeleteVehicle() {
   const qc = useQueryClient();
   return useMutation({

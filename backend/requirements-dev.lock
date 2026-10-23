@@ -1,0 +1,19 @@
+# Development dependencies (pyproject [dependency-groups].dev), pinned.
+# Resolved with Python 3.12 (python:3.12-alpine) to match the Docker runtime image.
+# Install on top of the runtime lock: pip install -r requirements.lock -r requirements-dev.lock
+# Shared transitive deps are listed so this file is self-contained.
+# Regenerate:
+#   podman run --rm python:3.12-alpine sh -c "pip install -q 'pytest>=8.0' 'httpx>=0.27' && pip freeze"
+#
+anyio==4.15.1
+certifi==2026.10.19
+h11==0.16.0
+httpcore==1.0.9
+httpx==0.28.1
+idna==3.20
+iniconfig==2.3.1
+packaging==26.3
+pluggy==1.7.0
+Pygments==2.21.0
+pytest==9.1.1
+typing_extensions==4.16.0

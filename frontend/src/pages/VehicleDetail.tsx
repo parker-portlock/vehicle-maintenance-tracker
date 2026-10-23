@@ -2,10 +2,12 @@ import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
   ActionIcon, Badge, Button, Card, Group, Loader, Modal, NativeSelect,
-  NumberInput, Select, Stack, Table, Text, Textarea, TextInput, Title,
+  NumberInput, Select, Stack, Table, Text, Textarea, Title,
 } from "@mantine/core";
 import { IconEdit, IconPlus, IconTrash, IconX } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
+import { DatePickerInput } from "@mantine/dates";
+import dayjs from "dayjs";
 import {
   useCreateLog, useCreateTask, useDeleteLog, useParts, useTasks, useUpdateLog, useVehicle, useVehicleLogs,
 } from "../api/hooks";
@@ -41,7 +43,11 @@ export default function VehicleDetail() {
 
   const form = useForm({
     initialValues: {
-      task_id: "", mileage: 0, performed_on: "", cost: "", labor_cost: "", notes: "",
+      task_id: "", mileage: 0, performed_on: null as Date | null,
+      cost: "", labor_cost: "", notes: "",
+    },
+    validate: {
+      performed_on: (value) => (value == null ? "Select the date performed" : null),
     },
   });
 
@@ -107,7 +113,7 @@ export default function VehicleDetail() {
     form.setValues({
       task_id: log.task.id,
       mileage: log.mileage,
-      performed_on: log.performed_on,
+      performed_on: dayjs(log.performed_on).toDate(),
       cost: log.cost != null ? String(log.cost) : "",
       labor_cost: log.labor_cost != null ? String(log.labor_cost) : "",
       notes: log.notes ?? "",
@@ -131,6 +137,9 @@ export default function VehicleDetail() {
   };
 
   const submit = form.onSubmit(async (values) => {
+    if (!values.performed_on) return;
+    // DatePickerInput stores a plain JS Date in the form; dayjs() normalizes Date/Dayjs/string
+    const performedOn = dayjs(values.performed_on).format("YYYY-MM-DD");
     let task_id = values.task_id;
     // "new:<name>" is the create-new-task option - this will be handled by the backend
     if (task_id && task_id.startsWith("new:")) {
@@ -150,7 +159,7 @@ export default function VehicleDetail() {
         logId: editingLog.id,
         task_id,
         mileage: values.mileage,
-        performed_on: values.performed_on,
+        performed_on: performedOn,
         cost: values.cost ? Number(values.cost) : undefined,
         labor_cost: values.labor_cost ? Number(values.labor_cost) : undefined,
         notes: values.notes || null,
@@ -161,7 +170,7 @@ export default function VehicleDetail() {
       await createLog.mutateAsync({
         task_id,
         mileage: values.mileage,
-        performed_on: values.performed_on,
+        performed_on: performedOn,
         cost: values.cost ? Number(values.cost) : undefined,
         labor_cost: values.labor_cost ? Number(values.labor_cost) : undefined,
         notes: values.notes || undefined,
@@ -240,7 +249,6 @@ export default function VehicleDetail() {
                     </ActionIcon>
                   </Group>
                 </Table.Td>
-                <Table.Td>{log.notes}</Table.Td>
               </Table.Tr>
             ))}
             {!logs?.length && (
@@ -277,10 +285,12 @@ export default function VehicleDetail() {
               {...form.getInputProps("task_id")}
             />
             <NumberInput required label="Mileage" min={0} {...form.getInputProps("mileage")} />
-            <TextInput
-              required
+            <DatePickerInput
+              withAsterisk
+              clearable
               label="Performed On"
               placeholder="YYYY-MM-DD"
+              valueFormat="YYYY-MM-DD"
               {...form.getInputProps("performed_on")}
             />
             <NumberInput label="Parts Cost ($)" min={0} decimalScale={2} {...form.getInputProps("cost")} />

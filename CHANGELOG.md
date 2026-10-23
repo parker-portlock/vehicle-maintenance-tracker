@@ -3,6 +3,54 @@
 All notable changes to this project are documented here.
 Format based on Keep a Changelog, adheres to Semantic Versioning.
 
+## [0.7.1] - 2026-10-22
+
+### Added
+- Docker deploy: one Alpine app image (nginx + FastAPI) plus `postgres:16-alpine`
+- Automatic migrations at container startup
+- First-run hint on the dashboard pointing to the Vehicles page (shown once)
+
+### Changed
+- API base URL build-time configurable (`VITE_API_BASE_URL`)
+- README rewritten for single-user, Docker-first use
+
+### Removed
+- Per-app Dockerfiles (replaced by the single app image)
+
+### Fixed
+- `DATABASE_URL`: explicit `+psycopg2` dialect (SQLAlchemy 2.0 maps plain `postgresql://` to the uninstalled psycopg v3 driver)
+- Remove Alpine's stock nginx `default.conf` (a `default_server` that returned 404 for every request)
+
+## [0.7.0] - 2026-10-22
+
+### Added
+- Settings page (`/settings`) with header navigation link; Data section for database operations
+- Database backup: `GET /api/v1/backup/export` downloads the full database as one JSON file (`vmt-backup` format v1); all tables in foreign-key order; UUIDs, dates and decimals serialized as JSON primitives; "Download Backup" button in Settings
+- Database restore: `POST /api/v1/backup/restore` accepts a backup file upload and replaces all data; deletes in reverse foreign-key order and inserts in foreign-key order inside one transaction; any failure rolls back; invalid, unrecognized or incomplete files reject before any data change; Settings file picker with confirmation and per-table restored counts
+
+## [0.6.2] - 2026-10-16
+
+### Fixed
+- Vehicle detail log table: removed a duplicated "Notes" cell that rendered after the edit/delete icons in each row
+
+## [0.6.1] - 2026-10-16
+
+### Added
+- Edit vehicle: pencil icon on the Vehicles page opens the vehicle form pre-filled (same form as add); calls existing `PUT /api/v1/vehicles/{id}`
+
+### Changed
+- Vehicles page: "View" text button replaced with a green eye icon to match the icon-based row actions
+- Log Maintenance form: "Performed On" field uses a calendar picker widget (Mantine `DatePickerInput`, value format `YYYY-MM-DD`) instead of a text field; required-date validation added; `@mantine/dates` and `dayjs` were already in the dependency set
+
+## [0.6.0] - 2026-10-16
+
+### Added
+- Dark/light mode toggle: icon button at the top right of the header (moon/sun); preference persists across reloads via the browser's localStorage
+- Version watermark next to the app title on every page; version injected at build time from the repo-root `VERSION` file
+
+### Fixed
+- `npm run build` (tsc step) emitted stray compiled `.js` files beside every source file; added `noEmit: true` to `frontend/tsconfig.json` so tsc type-checks only
+
 ## [0.5.0] - 2026-10-15
 
 ### Added
