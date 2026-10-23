@@ -1,4 +1,4 @@
-# Contributing to Vehicle Maintenance Tracker (VMT)
+# Contributing to Vehicle Maintenance Tracker (VMT) [WIP]
 
 Thanks for your interest in contributing! This document covers the basics of getting involved.
 
