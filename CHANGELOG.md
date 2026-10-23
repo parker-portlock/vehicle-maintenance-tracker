@@ -3,6 +3,24 @@
 All notable changes to this project are documented here.
 Format based on Keep a Changelog, adheres to Semantic Versioning.
 
+## [0.7.1] - 2026-10-22
+
+### Added
+- Docker deploy: one Alpine app image (nginx + FastAPI) plus `postgres:16-alpine`
+- Automatic migrations at container startup
+- First-run hint on the dashboard pointing to the Vehicles page (shown once)
+
+### Changed
+- API base URL build-time configurable (`VITE_API_BASE_URL`)
+- README rewritten for single-user, Docker-first use
+
+### Removed
+- Per-app Dockerfiles (replaced by the single app image)
+
+### Fixed
+- `DATABASE_URL`: explicit `+psycopg2` dialect (SQLAlchemy 2.0 maps plain `postgresql://` to the uninstalled psycopg v3 driver)
+- Remove Alpine's stock nginx `default.conf` (a `default_server` that returned 404 for every request)
+
 ## [0.7.0] - 2026-10-22
 
 ### Added

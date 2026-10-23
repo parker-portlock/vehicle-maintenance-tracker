@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    database_url: str = "postgresql://postgres:postgres@localhost:5432/maintenance"
+    database_url: str = "postgresql+psycopg2://postgres:postgres@localhost:5432/maintenance"
     s3_bucket: str = ""
     s3_region: str = "us-east-1"
     cors_origins: str = "http://localhost:5173,http://localhost:8000"

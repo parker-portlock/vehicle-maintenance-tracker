@@ -1,0 +1,15 @@
+.git
+.clinerules
+.github
+node_modules
+frontend/node_modules
+frontend/dist
+backend/.venv
+backend/**/__pycache__
+*.egg-info
+.pytest_cache
+.env
+.env.*
+docker-compose.override.yml
+*.log
+.DS_Store

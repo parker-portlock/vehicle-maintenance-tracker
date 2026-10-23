@@ -1,5 +1,6 @@
-import { NavLink, Route, Routes } from "react-router-dom";
-import { Container, Group, Title, UnstyledButton } from "@mantine/core";
+import { useState } from "react";
+import { NavLink, Route, Routes, useLocation } from "react-router-dom";
+import { Container, Group, Title, Tooltip, UnstyledButton } from "@mantine/core";
 import Dashboard from "./pages/Dashboard";
 import VehicleList from "./pages/VehicleList";
 import VehicleDetail from "./pages/VehicleDetail";
@@ -7,6 +8,9 @@ import Tasks from "./pages/Tasks";
 import Inventory from "./pages/Inventory";
 import Settings from "./pages/Settings";
 import { ThemeToggle, VersionWatermark } from "./components";
+import { useVehicles } from "./api/hooks";
+
+const ONBOARDING_KEY = "vmt_onboarding_seen";
 
 // Workaround for TypeScript issue with isActive property in Mantine v7
 const linkStyle = (isActive: boolean) => ({
@@ -16,6 +20,27 @@ const linkStyle = (isActive: boolean) => ({
 });
 
 export default function App() {
+  const location = useLocation();
+  const { data: vehicles } = useVehicles();
+  // First-run hint: on the dashboard with no vehicles, point the user
+  // to the Vehicles page. Shown once; dismissed permanently on click.
+  const [onboarding, setOnboarding] = useState(() => {
+    try {
+      return localStorage.getItem(ONBOARDING_KEY) === null;
+    } catch {
+      return true;
+    }
+  });
+
+  const dismissOnboarding = () => {
+    try {
+      localStorage.setItem(ONBOARDING_KEY, "1");
+    } catch {
+      /* storage unavailable */
+    }
+    setOnboarding(false);
+  };
+
   return (
     <>
       <Container size="xl" py="md">
@@ -28,9 +53,26 @@ export default function App() {
             <UnstyledButton component={NavLink} to="/" style={(props: any) => linkStyle(props.isActive)}>
               Dashboard
             </UnstyledButton>
-            <UnstyledButton component={NavLink} to="/vehicles" style={(props: any) => linkStyle(props.isActive)}>
-              Vehicles
-            </UnstyledButton>
+            <Tooltip
+              label="Add your first vehicle"
+              opened={
+                onboarding &&
+                location.pathname === "/" &&
+                vehicles !== undefined &&
+                vehicles.length === 0
+              }
+              withArrow
+              position="bottom"
+            >
+              <UnstyledButton
+                component={NavLink}
+                to="/vehicles"
+                onClick={() => dismissOnboarding()}
+                style={(props: any) => linkStyle(props.isActive)}
+              >
+                Vehicles
+              </UnstyledButton>
+            </Tooltip>
             <UnstyledButton component={NavLink} to="/tasks" style={(props: any) => linkStyle(props.isActive)}>
               Tasks
             </UnstyledButton>
