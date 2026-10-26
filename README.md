@@ -65,6 +65,37 @@ DB_PASSWORD=secret APP_PORT=9000 docker compose up --build -d
 - **Start over** - `docker compose down -v` deletes the database. Take a
   backup first if you want to keep anything.
 
+## Upgrading
+
+Your data is stored in the `pgdata` volume and is not affected by upgrades.
+Database migrations apply automatically when the app container starts.
+
+1. Take a backup from the Settings page (recommended).
+2. Pull the latest build from `main`:
+   ```bash
+   git pull
+   ```
+3. Rebuild and restart:
+   ```bash
+   docker compose up --build -d
+   ```
+4. Confirm the new version in the watermark next to the app title.
+
+**Dev channel**: stable releases are tagged `vX.Y.Z` (e.g. `v0.7.1`) and dev
+channel builds are tagged `vX.Y.Z-dev` (prereleases). To run a specific
+release instead of the latest build, check out its tag and repeat step 3:
+
+```bash
+git fetch --tags
+git checkout v0.7.1      # or a dev channel tag, e.g. v0.7.1-dev
+docker compose up --build -d
+```
+
+**Rolling back**: repeat the steps above with the previous build or tag.
+Migrations only apply forward, so if the release you are upgrading to
+has a `Database` section in [CHANGELOG.md](./CHANGELOG.md), the safe way
+back is to restore the backup from step 1.
+
 ## For developers
 
 Run the stack outside Docker (three terminal windows):

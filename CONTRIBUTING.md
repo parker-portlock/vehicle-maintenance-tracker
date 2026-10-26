@@ -50,6 +50,7 @@ Open an issue tagged as a feature request. Describe the problem you're trying to
 - Follow the existing style of the codebase — consistency wins over preference
 - New features should include tests where practical
 - Bug fixes should include a test that fails before the fix and passes after
+- Changes that alter the database schema get a `### Database` section in the release's CHANGELOG entry — the README tells users to check it before upgrading
 
 ## Code of Conduct Basics
 
