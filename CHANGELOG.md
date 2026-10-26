@@ -3,6 +3,17 @@
 All notable changes to this project are documented here.
 Format based on Keep a Changelog, adheres to Semantic Versioning.
 
+Releases that alter the database schema include a `### Database` section —
+check it before upgrading (see "Upgrading" in the README).
+
+## [0.7.2] - 2026-10-25
+
+### Changed
+- README: version upgrade instructions; this changelog now flags schema changes in a `Database` section
+
+### Fixed
+- Log Maintenance form: Task select displayed the first task as selected while the form value stayed empty, so submitting with that "default" task failed validation ("Please select a valid task"). The form now starts blank with a "Select a task" placeholder option
+
 ## [0.7.1] - 2026-10-22
 
 ### Added
@@ -71,6 +82,9 @@ Format based on Keep a Changelog, adheres to Semantic Versioning.
 - Creating a log via `task_name` dropped the resolved task id (NOT NULL violation); the task id is now set on the payload before insert
 - Calendar picker: month navigation arrows point correctly and out-of-month days are grayed out (imported the missing `@mantine/dates` stylesheet)
 
+### Database
+- New `labor_cost` column on `maintenance_logs` (alembic migration `0486810bc647`)
+
 ## [0.4.1] - 2026-10-15
 
 ### Added
@@ -100,6 +114,10 @@ Format based on Keep a Changelog, adheres to Semantic Versioning.
 - Stock never drops below zero
 - Frontend refreshes the parts list after a log is created so updated counts display
 
+### Database
+- New `log_parts` table (log_id + part_id composite key, quantity)
+- `parts_used` JSONB column dropped from `maintenance_logs`
+
 ## [0.3.1] - 2026-09-20
 
 ### Fixed
@@ -126,6 +144,9 @@ Format based on Keep a Changelog, adheres to Semantic Versioning.
 ### Fixed
 - Various frontend build configuration issues
 - CORS issues for some API endpoints
+
+### Database
+- Parts inventory table created with brand, category, part_number, specification, and capacity fields
 
 ## [0.2.0] - 2026-09-13
 
@@ -158,6 +179,9 @@ Format based on Keep a Changelog, adheres to Semantic Versioning.
 ### Fixed
 - Alembic config: DATABASE_URL injection + logging guard
 - CI failures: pyproject parse error, vite v7 pin, pytest exit code
+
+### Database
+- Initial migration created all four tables
 
 ### Verified
 - End-to-end API: vehicle, task, log creation (201s)
