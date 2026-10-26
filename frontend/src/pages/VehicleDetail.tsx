@@ -277,6 +277,7 @@ export default function VehicleDetail() {
               required
               label="Task"
               data={[
+                { value: "", label: "Select a task" },
                 ...taskOptions,
                 ...["Oil Change", "Tire Rotation", "Chain Lube", "Brake Service"]
                   .filter((n) => !tasks?.some((t) => t.name === n))

@@ -3,6 +3,11 @@
 All notable changes to this project are documented here.
 Format based on Keep a Changelog, adheres to Semantic Versioning.
 
+## [0.7.2] - 2026-10-25
+
+### Fixed
+- Log Maintenance form: Task select displayed the first task as selected while the form value stayed empty, so submitting with that "default" task failed validation ("Please select a valid task"). The form now starts blank with a "Select a task" placeholder option
+
 ## [0.7.1] - 2026-10-22
 
 ### Added
