@@ -11,7 +11,7 @@ check it before upgrading (see "Upgrading" in the README).
 ### Changed
 - Log Maintenance form: "Parts Cost" field renamed to "Additional Parts Cost"; inventory parts cost is now calculated from the inventory parts used (inventory part cost × quantity; a part with no cost set counts as $0; null quantity counts as 1) and shown live in the form
 - Vehicle detail: "Parts Spent" badge, log table parts cost column, and the spending chart's Parts series now include both the inventory parts cost and the additional parts cost
-- Vehicle detail log table: "Parts Used" column now shows each part's brand before the name
+- Vehicle detail log table: "Parts Used" column now shows each part's brand before the name, one part per line
 - Editing a log: the Additional Parts Cost (or Labor Cost) value can be cleared; an empty field saves as no value
 
 ## [0.7.2] - 2026-10-25

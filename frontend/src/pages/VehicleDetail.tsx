@@ -246,7 +246,11 @@ export default function VehicleDetail() {
                 <Table.Td>{log.labor_cost ? `$${Number(log.labor_cost).toFixed(2)}` : "—"}</Table.Td>
                 <Table.Td>
                   {log.parts_used?.length
-                    ? log.parts_used.map((p) => `${p.brand} ${p.name} ×${p.quantity ?? 1}`).join(", ")
+                    ? log.parts_used.map((p) => (
+                        <span key={p.id} style={{ display: "block" }}>
+                          {`${p.brand} ${p.name} ×${p.quantity ?? 1}`}
+                        </span>
+                      ))
                     : "—"}
                 </Table.Td>
                 <Table.Td>{log.notes}</Table.Td>
