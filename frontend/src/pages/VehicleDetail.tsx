@@ -56,9 +56,28 @@ export default function VehicleDetail() {
     [tasks]
   );
 
+  // A log's inventory parts cost: each used part's inventory cost × quantity.
+  // Parts with a null cost count as 0; a null quantity counts as 1.
+  const partsCostForLog = (log: MaintenanceLog): number =>
+    (log.parts_used ?? []).reduce((sum, lp) => {
+      const part = partById.get(lp.id);
+      return sum + (part?.cost ?? 0) * (lp.quantity ?? 1);
+    }, 0);
+
+  // Total parts cost for a log: inventory parts cost + additional parts cost (log.cost)
+  const logPartsTotal = (log: MaintenanceLog): number =>
+    partsCostForLog(log) + (log.cost ? Number(log.cost) : 0);
+
+  // Live parts cost shown in the form while parts are being selected
+  const formPartsCost = selectedParts.reduce((sum, lp) => {
+    const part = partById.get(lp.id);
+    return sum + (part?.cost ?? 0) * (lp.quantity ?? 1);
+  }, 0);
+
+  // "Parts Spent" includes both the inventory parts cost and the additional parts cost
   const partsSpend = useMemo(
-    () => (logs ?? []).reduce((sum, l) => sum + (l.cost ? Number(l.cost) : 0), 0),
-    [logs]
+    () => (logs ?? []).reduce((sum, l) => sum + logPartsTotal(l), 0),
+    [logs, parts]
   );
   const laborSpend = useMemo(
     () => (logs ?? []).reduce((sum, l) => sum + (l.labor_cost ? Number(l.labor_cost) : 0), 0),
@@ -160,8 +179,10 @@ export default function VehicleDetail() {
         task_id,
         mileage: values.mileage,
         performed_on: performedOn,
-        cost: values.cost ? Number(values.cost) : undefined,
-        labor_cost: values.labor_cost ? Number(values.labor_cost) : undefined,
+        // Send explicit null for cleared fields: a key omitted from the body
+        // leaves the existing value unchanged on the backend
+        cost: values.cost ? Number(values.cost) : null,
+        labor_cost: values.labor_cost ? Number(values.labor_cost) : null,
         notes: values.notes || null,
         // Always send parts in edit mode so removals are applied to the log
         parts_used: selectedParts,
@@ -221,11 +242,11 @@ export default function VehicleDetail() {
                 <Table.Td>{log.performed_on}</Table.Td>
                 <Table.Td>{log.task.name}</Table.Td>
                 <Table.Td>{log.mileage.toLocaleString()}</Table.Td>
-                <Table.Td>{log.cost ? `$${Number(log.cost).toFixed(2)}` : "—"}</Table.Td>
+                <Table.Td>{logPartsTotal(log) > 0 ? `$${logPartsTotal(log).toFixed(2)}` : "—"}</Table.Td>
                 <Table.Td>{log.labor_cost ? `$${Number(log.labor_cost).toFixed(2)}` : "—"}</Table.Td>
                 <Table.Td>
                   {log.parts_used?.length
-                    ? log.parts_used.map((p) => `${p.name} ×${p.quantity ?? 1}`).join(", ")
+                    ? log.parts_used.map((p) => `${p.brand} ${p.name} ×${p.quantity ?? 1}`).join(", ")
                     : "—"}
                 </Table.Td>
                 <Table.Td>{log.notes}</Table.Td>
@@ -258,7 +279,7 @@ export default function VehicleDetail() {
         </Table>
       </Card>
 
-      <SpendChart logs={logs ?? []} />
+      <SpendChart logs={logs ?? []} getPartsCost={partsCostForLog} />
 
       <Modal
         opened={opened}
@@ -294,7 +315,7 @@ export default function VehicleDetail() {
               valueFormat="YYYY-MM-DD"
               {...form.getInputProps("performed_on")}
             />
-            <NumberInput label="Parts Cost ($)" min={0} decimalScale={2} {...form.getInputProps("cost")} />
+            <NumberInput label="Additional Parts Cost ($)" min={0} decimalScale={2} {...form.getInputProps("cost")} />
             <NumberInput label="Labor Cost ($)" min={0} decimalScale={2} {...form.getInputProps("labor_cost")} />
             <Textarea label="Notes" autosize minRows={2} {...form.getInputProps("notes")} />
             {/* Inventory Used */}
@@ -302,6 +323,7 @@ export default function VehicleDetail() {
               <Text fw={600}>Inventory Used</Text>
               <Text size="sm" c="dimmed">
                 Add the inventory parts used in this maintenance, with an exact quantity for each.
+                Their cost is calculated from the inventory (a part with no cost set counts as $0).
               </Text>
 
               {selectedParts.length > 0 && (
@@ -334,6 +356,12 @@ export default function VehicleDetail() {
                     );
                   })}
                 </Stack>
+              )}
+
+              {selectedParts.length > 0 && (
+                <Text size="sm" fw={600} mt={4}>
+                  Parts Cost (from inventory): ${formPartsCost.toFixed(2)}
+                </Text>
               )}
 
               <Select

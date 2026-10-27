@@ -61,7 +61,15 @@ function fmtTick(d: Date): string {
   return `${d.toLocaleDateString("en-US", { month: "short" })} ${String(d.getFullYear()).slice(2)}`;
 }
 
-export default function SpendChart({ logs }: { logs: MaintenanceLog[] }) {
+export default function SpendChart({
+  logs,
+  getPartsCost,
+}: {
+  logs: MaintenanceLog[];
+  // Returns a log's inventory parts cost (sum of used parts' inventory cost × quantity).
+  // Defaults to 0, so charts keep working with plain additional-parts-cost only.
+  getPartsCost?: (log: MaintenanceLog) => number;
+}) {
   const theme = useMantineTheme();
   const [visible, setVisible] = useState<Record<SeriesKey, boolean>>({
     total: true,
@@ -103,17 +111,24 @@ export default function SpendChart({ logs }: { logs: MaintenanceLog[] }) {
 
   const data = useMemo<Point[]>(() => {
     const rows = [...logs]
-      .map((l) => ({
-        date: new Date(`${l.performed_on}T00:00:00`).getTime(),
-        parts: l.cost != null ? Number(l.cost) : null,
-        labor: l.labor_cost != null ? Number(l.labor_cost) : null,
-      }))
+      .map((l) => {
+        // Parts spend = inventory parts cost (from the parts used) + additional parts cost
+        const inventoryPartsCost = getPartsCost ? getPartsCost(l) : 0;
+        const hasParts = inventoryPartsCost > 0 || l.cost != null;
+        return {
+          date: new Date(`${l.performed_on}T00:00:00`).getTime(),
+          parts: hasParts
+            ? inventoryPartsCost + (l.cost != null ? Number(l.cost) : 0)
+            : null,
+          labor: l.labor_cost != null ? Number(l.labor_cost) : null,
+        };
+      })
       .sort((a, b) => a.date - b.date)
       .filter(
         (r) => r.date >= windowRange.start && r.date <= windowRange.end
       );
     // Lines plot the SUM: each point is the cumulative spend up to that date.
-    // Logs with a null cost/labor_cost do not produce a point on that series.
+    // Logs with no parts cost (or a null additional parts cost) do not produce a point on the parts series.
     let partsSum = 0;
     let laborSum = 0;
     return rows.map((r) => {
@@ -128,7 +143,7 @@ export default function SpendChart({ logs }: { logs: MaintenanceLog[] }) {
         total: hasParts || hasLabor ? partsSum + laborSum : null,
       };
     });
-  }, [logs, windowRange]);
+  }, [logs, windowRange, getPartsCost]);
 
   const { start: xStart, end: xEnd } = windowRange;
 
