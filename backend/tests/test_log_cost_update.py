@@ -57,8 +57,9 @@ def test_update_log_clears_costs_when_null():
         )
         assert resp.status_code == 200, resp.text
         body = resp.json()
-        assert body["cost"] == 42.5
-        assert body["labor_cost"] == 10.0
+        # Decimals serialize as strings (e.g. "42.50") — compare numerically
+        assert float(body["cost"]) == 42.5
+        assert float(body["labor_cost"]) == 10.0
         assert body["mileage"] == 10200
 
         # 2. An explicit null clears the values
