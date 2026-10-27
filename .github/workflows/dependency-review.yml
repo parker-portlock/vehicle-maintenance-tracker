@@ -8,6 +8,8 @@ on:
 
 permissions:
   contents: read
+  # Required for comment-summary-in-pr: always in the dependency-review job
+  pull-requests: write
 
 jobs:
   dependency-review:
