@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Badge, Button, Card, Group, Loader, Modal, NumberInput,
   Stack, Table, Text, TextInput, Title, Alert, ActionIcon,
@@ -7,6 +7,8 @@ import { IconPlus, IconTrash, IconEdit } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCreatePart, useUpdatePart, useDeletePart, useParts } from "../api/hooks";
+import SortableTh from "../components/SortableTh";
+import { sortRows, useTableSort } from "../hooks/useTableSort";
 
 // Define the Part type
 interface Part {
@@ -34,6 +36,9 @@ export default function Inventory() {
 
   // Fetch parts
   const { data: parts, isLoading } = useParts();
+
+  // Column sorting for the parts table (click a header to toggle)
+  const { sort, toggleSort } = useTableSort();
 
   const form = useForm<PartFormValues>({
     initialValues: {
@@ -113,6 +118,41 @@ export default function Inventory() {
     return `${Number(value).toFixed(2)}${unit ? ` ${unit}` : ""}`;
   };
 
+  // Sort value for each inventory column (null sorts last)
+  const partSortValue = (part: Part, key: string | null): string | number | null => {
+    switch (key) {
+      case "brand":
+        return part.brand;
+      case "name":
+        return part.name;
+      case "category":
+        return part.category;
+      case "partNumber":
+        return part.part_number;
+      case "specification":
+        return part.specification;
+      case "capacity":
+        return part.capacity;
+      case "cost":
+        return part.cost;
+      case "quantity":
+        return part.quantity;
+      case "supplier":
+        return part.supplier;
+      default:
+        return null;
+    }
+  };
+
+  const displayedParts = useMemo(
+    () => sortRows(parts ?? [], sort, (part) => partSortValue(part, sort.key)),
+    [parts, sort]
+  );
+
+  const th = (label: string, sortKey: string) => (
+    <SortableTh label={label} sortKey={sortKey} activeKey={sort.key} direction={sort.direction} onSort={toggleSort} />
+  );
+
   if (isLoading) return <Loader />;
 
   return (
@@ -139,21 +179,21 @@ export default function Inventory() {
         <Table>
           <Table.Thead>
             <Table.Tr>
-              <Table.Th>Brand</Table.Th>
-              <Table.Th>Name</Table.Th>
-              <Table.Th>Category</Table.Th>
-              <Table.Th>Part Number</Table.Th>
-              <Table.Th>Specification</Table.Th>
-              <Table.Th>Capacity</Table.Th>
-              <Table.Th>Cost</Table.Th>
-              <Table.Th>Quantity</Table.Th>
-              <Table.Th>Supplier</Table.Th>
+              {th("Brand", "brand")}
+              {th("Name", "name")}
+              {th("Category", "category")}
+              {th("Part Number", "partNumber")}
+              {th("Specification", "specification")}
+              {th("Capacity", "capacity")}
+              {th("Cost", "cost")}
+              {th("Quantity", "quantity")}
+              {th("Supplier", "supplier")}
               <Table.Th>Notes</Table.Th>
               <Table.Th>Actions</Table.Th>
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
-            {parts?.map((part) => (
+            {displayedParts.map((part) => (
               <Table.Tr key={part.id}>
                 <Table.Td>{part.brand}</Table.Td>
                 <Table.Td>{part.name}</Table.Td>

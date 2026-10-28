@@ -13,6 +13,8 @@ import {
 } from "../api/hooks";
 import type { LogPartRef, MaintenanceLog, Part } from "../api/types";
 import SpendChart from "../components/SpendChart";
+import SortableTh from "../components/SortableTh";
+import { sortRows, useTableSort } from "../hooks/useTableSort";
 
 export default function VehicleDetail() {
   const { id } = useParams<{ id: string }>();
@@ -24,6 +26,8 @@ export default function VehicleDetail() {
   const deleteLog = useDeleteLog(id!);
   const createTask = useCreateTask();
   const { data: parts } = useParts();
+  // Column sorting for the log table (click a header to toggle)
+  const { sort, toggleSort } = useTableSort();
   const [opened, setOpened] = useState(false);
   const [editingLog, setEditingLog] = useState<MaintenanceLog | null>(null);
 
@@ -67,6 +71,33 @@ export default function VehicleDetail() {
   // Total parts cost for a log: inventory parts cost + additional parts cost (log.cost)
   const logPartsTotal = (log: MaintenanceLog): number =>
     partsCostForLog(log) + (log.cost ? Number(log.cost) : 0);
+
+  // Sort value for each log table column (null sorts last)
+  const logSortValue = (log: MaintenanceLog, key: string | null): string | number | null => {
+    switch (key) {
+      case "date":
+        return log.performed_on;
+      case "task":
+        return log.task.name;
+      case "mileage":
+        return log.mileage;
+      case "partsCost":
+        return logPartsTotal(log);
+      case "laborCost":
+        return log.labor_cost != null ? Number(log.labor_cost) : null;
+      default:
+        return null;
+    }
+  };
+
+  const displayedLogs = useMemo(
+    () => sortRows(logs ?? [], sort, (log) => logSortValue(log, sort.key)),
+    [logs, sort]
+  );
+
+  const th = (label: string, sortKey: string) => (
+    <SortableTh label={label} sortKey={sortKey} activeKey={sort.key} direction={sort.direction} onSort={toggleSort} />
+  );
 
   // Live parts cost shown in the form while parts are being selected
   const formPartsCost = selectedParts.reduce((sum, lp) => {
@@ -232,12 +263,13 @@ export default function VehicleDetail() {
         <Table>
           <Table.Thead>
             <Table.Tr>
-              <Table.Th>Date</Table.Th><Table.Th>Task</Table.Th><Table.Th>Mileage</Table.Th>
-              <Table.Th>Parts Cost</Table.Th><Table.Th>Labor Cost</Table.Th><Table.Th>Parts Used</Table.Th><Table.Th>Notes</Table.Th><Table.Th />
+              {th("Date", "date")}{th("Task", "task")}{th("Mileage", "mileage")}
+              {th("Parts Cost", "partsCost")}{th("Labor Cost", "laborCost")}
+              <Table.Th>Parts Used</Table.Th><Table.Th>Notes</Table.Th><Table.Th />
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
-            {logs?.map((log) => (
+            {displayedLogs.map((log) => (
               <Table.Tr key={log.id}>
                 <Table.Td>{log.performed_on}</Table.Td>
                 <Table.Td>{log.task.name}</Table.Td>

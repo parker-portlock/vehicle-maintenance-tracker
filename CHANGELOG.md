@@ -8,6 +8,9 @@ check it before upgrading (see "Upgrading" in the README).
 
 ## [0.8.0] - 2026-10-27
 
+### Added
+- Vehicle detail and Inventory tables: sortable column headers — click to sort ascending, click again to sort descending
+
 ### Changed
 - Log Maintenance form: "Parts Cost" field renamed to "Additional Parts Cost"; inventory parts cost is now calculated from the inventory parts used (inventory part cost × quantity; a part with no cost set counts as $0; null quantity counts as 1) and shown live in the form
 - Vehicle detail: "Parts Spent" badge, log table parts cost column, and the spending chart's Parts series now include both the inventory parts cost and the additional parts cost
