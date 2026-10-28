@@ -6,7 +6,7 @@ Format based on Keep a Changelog, adheres to Semantic Versioning.
 Releases that alter the database schema include a `### Database` section —
 check it before upgrading (see "Upgrading" in the README).
 
-## [0.8.0] - 2026-10-27
+## [0.8.0] - 2026-10-28
 
 ### Added
 - Vehicle detail and Inventory tables: sortable column headers — click to sort ascending, click again to sort descending
