@@ -112,13 +112,17 @@ export default function App() {
             ) : (
               <Popover
                 opened={navOpened}
-                onOpen={() => setNavOpened(true)}
-                onClose={() => setNavOpened(false)}
+                onChange={setNavOpened}
                 position="bottom-end"
                 zIndex={100}
               >
                 <Popover.Target>
-                  <ActionIcon variant="subtle" aria-label="Open menu" title="Menu">
+                  <ActionIcon
+                    variant="subtle"
+                    aria-label="Open menu"
+                    title="Menu"
+                    onClick={() => setNavOpened((o) => !o)}
+                  >
                     <IconMenu2 size={20} />
                   </ActionIcon>
                 </Popover.Target>
