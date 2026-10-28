@@ -54,6 +54,9 @@ export interface Part {
   part_number: string;
   specification: string | null;
   capacity: number | null;
+  // Canonical capacity unit: "L" or "kg" (metric), or null when no unit
+  // was chosen. Display units (qt/lbs) are derived from the unit setting.
+  capacity_unit: string | null;
   cost: number | null;
   quantity: number;
   supplier: string | null;

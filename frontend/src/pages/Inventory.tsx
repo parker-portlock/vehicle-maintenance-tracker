@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import {
   Badge, Button, Card, Group, Loader, Modal, NumberInput,
-  Stack, Table, Text, TextInput, Title, Alert, ActionIcon,
+  Select, Stack, Table, Text, TextInput, Title, Alert, ActionIcon,
 } from "@mantine/core";
 import { IconPlus, IconTrash, IconEdit } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
@@ -9,6 +9,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCreatePart, useUpdatePart, useDeletePart, useParts } from "../api/hooks";
 import SortableTh from "../components/SortableTh";
 import { sortRows, useTableSort } from "../hooks/useTableSort";
+import { useUnits } from "../hooks/useUnits";
+import {
+  toDisplayCapacity,
+  toCanonicalCapacity,
+  formatCapacity,
+  type CapacityType,
+} from "../utils/units";
 
 // Define the Part type
 interface Part {
@@ -19,6 +26,7 @@ interface Part {
   part_number: string;
   specification: string | null;
   capacity: number | null;
+  capacity_unit: string | null;
   cost: number | null;
   quantity: number;
   supplier: string | null;
@@ -37,6 +45,10 @@ export default function Inventory() {
   // Fetch parts
   const { data: parts, isLoading } = useParts();
 
+  // Imperial/Metric preference from Settings; drives the capacity unit
+  // options and the live conversion of stored capacities.
+  const { units } = useUnits();
+
   // Column sorting for the parts table (click a header to toggle)
   const { sort, toggleSort } = useTableSort();
 
@@ -48,6 +60,7 @@ export default function Inventory() {
       part_number: "",
       specification: null,
       capacity: null,
+      capacity_unit: null,
       cost: null,
       quantity: 0,
       supplier: null,
@@ -72,10 +85,29 @@ export default function Inventory() {
     setError(null);
 
     try {
-      // Handle empty capacity values by converting to null
+      // Capacity is entered in the user's display unit (L/kg or qt/lbs) and,
+      // when a unit is chosen, stored in the canonical metric unit (L or kg).
+      // With no unit selected the number is stored as-is with a null unit.
+      const rawCapacity = values.capacity as string | number | null;
+      const hasCapacity =
+        rawCapacity !== "" && rawCapacity !== null && rawCapacity !== undefined;
+      const selectedType = values.capacity_unit as CapacityType | null;
+      let capacity: number | null = null;
+      let capacity_unit: string | null = null;
+      if (hasCapacity) {
+        const value = Number(rawCapacity);
+        if (selectedType === "L" || selectedType === "kg") {
+          capacity = toCanonicalCapacity(value, selectedType, units);
+          capacity_unit = selectedType;
+        } else {
+          capacity = value;
+          capacity_unit = null;
+        }
+      }
       const processedValues = {
         ...values,
-        capacity: (values.capacity as string | number | null) === "" ? null : values.capacity
+        capacity,
+        capacity_unit,
       };
 
       if (editingPart) {
@@ -96,7 +128,20 @@ export default function Inventory() {
 
   const handleEdit = (part: Part) => {
     setEditingPart(part);
-    form.setValues(part);
+    // Show the capacity in the user's current unit; the stored value is in
+    // the canonical metric unit (L or kg), so convert for display.
+    const type =
+      part.capacity_unit === "L" || part.capacity_unit === "kg"
+        ? (part.capacity_unit as CapacityType)
+        : null;
+    form.setValues({
+      ...part,
+      capacity:
+        part.capacity == null || type === null
+          ? part.capacity
+          : toDisplayCapacity(part.capacity, type, units),
+      capacity_unit: type ?? null,
+    });
     setOpened(true);
   };
 
@@ -110,12 +155,6 @@ export default function Inventory() {
   const formatCurrency = (value: number | null | undefined): string => {
     if (value === null || value === undefined) return "—";
     return `$${Number(value).toFixed(2)}`;
-  };
-
-  // Format capacity with unit
-  const formatCapacity = (value: number | null | undefined, unit?: string): string => {
-    if (value === null || value === undefined) return "—";
-    return `${Number(value).toFixed(2)}${unit ? ` ${unit}` : ""}`;
   };
 
   // Sort value for each inventory column (null sorts last)
@@ -200,7 +239,9 @@ export default function Inventory() {
                 <Table.Td data-label="Category">{part.category}</Table.Td>
                 <Table.Td data-label="Part Number">{part.part_number}</Table.Td>
                 <Table.Td data-label="Specification">{part.specification ?? "—"}</Table.Td>
-                <Table.Td data-label="Capacity">{formatCapacity(part.capacity, "units")}</Table.Td>
+                <Table.Td data-label="Capacity">
+                  {formatCapacity(part.capacity, part.capacity_unit as CapacityType | null, units)}
+                </Table.Td>
                 <Table.Td data-label="Cost">{formatCurrency(part.cost)}</Table.Td>
                 <Table.Td data-label="Quantity">{part.quantity}</Table.Td>
                 <Table.Td data-label="Supplier">{part.supplier ?? "—"}</Table.Td>
@@ -270,6 +311,23 @@ export default function Inventory() {
             <NumberInput
               label="Capacity"
               {...form.getInputProps("capacity")}
+            />
+            <Select
+              label="Unit (optional)"
+              placeholder="None"
+              clearable
+              data={
+                units === "metric"
+                  ? [
+                      { value: "L", label: "L" },
+                      { value: "kg", label: "kg" },
+                    ]
+                  : [
+                      { value: "L", label: "qt" },
+                      { value: "kg", label: "lbs" },
+                    ]
+              }
+              {...form.getInputProps("capacity_unit")}
             />
             <NumberInput
               label="Cost"

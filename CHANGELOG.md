@@ -13,12 +13,16 @@ check it before upgrading (see "Upgrading" in the README).
 - Maintenance interval and log mileage display in Miles or Kilometers; values convert live and display as whole numbers
 - Vehicle detail and Inventory tables: sortable column headers — click to sort ascending, click again to sort descending
 - Mobile-friendly view: header toggle (next to the theme switch) constrains the app to a phone-like column, renders data tables as labeled cards, and collapses the top navigation into a hamburger menu (desktop view keeps the inline links); the setting persists in localStorage
+- Inventory: optional Capacity unit selector (L/kg or qt/lbs per the Units setting); the value converts live with the setting and the Capacity column appends the unit (e.g. 5L, 4qt)
 
 ### Changed
 - Log Maintenance form: "Parts Cost" field renamed to "Additional Parts Cost"; inventory parts cost is now calculated from the inventory parts used (inventory part cost × quantity; a part with no cost set counts as $0; null quantity counts as 1) and shown live in the form
 - Vehicle detail: "Parts Spent" badge, log table parts cost column, and the spending chart's Parts series now include both the inventory parts cost and the additional parts cost
 - Vehicle detail log table: "Parts Used" column now shows each part's brand before the name, one part per line
 - Editing a log: the Additional Parts Cost (or Labor Cost) value can be cleared; an empty field saves as no value
+
+### Database
+- New `parts.capacity_unit` column (nullable; "L" or "kg")
 
 ## [0.7.2] - 2026-10-25
 
