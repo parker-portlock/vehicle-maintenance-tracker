@@ -110,23 +110,23 @@ export default function Tasks() {
           <Table.Tbody>
             {tasks?.map((t) => (
               <Table.Tr key={t.id}>
-                <Table.Td>{t.name}</Table.Td>
-                <Table.Td><Text size="sm">{t.description || "—"}</Text></Table.Td>
-                <Table.Td>
+                <Table.Td data-label="Name">{t.name}</Table.Td>
+                <Table.Td data-label="Description"><Text size="sm">{t.description || "—"}</Text></Table.Td>
+                <Table.Td data-label="Interval (Miles)">
                   {t.interval_miles !== null && t.interval_miles !== undefined ? (
                     <Badge variant="light">Every {t.interval_miles} miles</Badge>
                   ) : (
                     "—"
                   )}
                 </Table.Td>
-                <Table.Td>
+                <Table.Td data-label="Interval (Months)">
                   {t.interval_months !== null && t.interval_months !== undefined ? (
                     <Badge variant="light">Every {t.interval_months} months</Badge>
                   ) : (
                     "—"
                   )}
                 </Table.Td>
-                <Table.Td>
+                <Table.Td data-label="">
                   <Group justify="flex-end">
                     <ActionIcon
                       variant="light"

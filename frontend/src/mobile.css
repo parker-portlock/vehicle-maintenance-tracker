@@ -1,0 +1,99 @@
+/* Mobile-friendly view
+   Enabled by adding the `.vmt-app-mobile` class to the app shell (see App.tsx).
+   Converts the wide desktop layout into a narrow, single-column, card-based
+   layout optimized for small screens and touch input.
+
+   All rules are scoped under `.vmt-app-mobile`, so the desktop layout is
+   completely untouched when the toggle is off. Mantine ships hashed class
+   names, so tables are styled with element selectors (robust) that reference
+   Mantine's own `--table-border-color` variable so borders adapt to the
+   current light/dark theme. */
+
+/* Constrain the app to a phone-like column and center it. On a real phone the
+   viewport is already narrower, so this simply fills the width. */
+.vmt-app-mobile {
+  max-width: 680px;
+  margin-inline: auto;
+}
+
+/* Slightly tighter side padding inside the Mantine Container (its direct
+   child is the Container element). */
+.vmt-app-mobile > div {
+  padding-inline: 12px;
+}
+
+/* --- Tables become labeled cards ----------------------------------------- */
+
+.vmt-app-mobile table {
+  display: block;
+  width: 100%;
+  padding: 6px 0;
+}
+
+/* Hide the header row: each cell below carries its own label instead. */
+.vmt-app-mobile thead {
+  display: none;
+}
+
+.vmt-app-mobile tbody,
+.vmt-app-mobile tr {
+  display: block;
+}
+
+/* Render each row as a card. */
+.vmt-app-mobile tbody > tr {
+  border: 1px solid var(--table-border-color, var(--mantine-color-gray-3));
+  border-radius: 8px;
+  margin-bottom: 12px;
+  padding: 4px 12px;
+}
+
+/* Cells: column label on the left, value in the remaining space. Using an
+   absolutely-positioned label lets values of any shape (text, badges,
+   multi-line lists) flow and wrap naturally. */
+.vmt-app-mobile td {
+  --mlabel-w: 140px;
+  display: block;
+  position: relative;
+  padding: 8px 0 8px calc(var(--mlabel-w) + 12px);
+  border-bottom: 1px dashed var(--table-border-color, var(--mantine-color-gray-3));
+}
+
+.vmt-app-mobile tbody > tr > td:last-child {
+  border-bottom: none;
+}
+
+.vmt-app-mobile td::before {
+  content: attr(data-label);
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: var(--mlabel-w);
+  font-weight: 600;
+}
+
+/* Action cells (data-label=""): no label, and the inner Group already
+   right-aligns the icons. */
+.vmt-app-mobile td[data-label=""] {
+  padding-left: 0;
+}
+.vmt-app-mobile td[data-label=""]::before {
+  content: none;
+}
+
+/* Empty-state rows (no data-label attribute): a plain centered message with no
+   label indent. */
+.vmt-app-mobile td:not([data-label]) {
+  padding: 12px;
+  text-align: center;
+}
+.vmt-app-mobile td:not([data-label])::before {
+  content: none;
+}
+
+/* Bigger touch targets for the in-table action icons. */
+.vmt-app-mobile td a,
+.vmt-app-mobile td button {
+  min-width: 34px;
+  min-height: 34px;
+}

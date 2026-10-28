@@ -271,12 +271,12 @@ export default function VehicleDetail() {
           <Table.Tbody>
             {displayedLogs.map((log) => (
               <Table.Tr key={log.id}>
-                <Table.Td>{log.performed_on}</Table.Td>
-                <Table.Td>{log.task.name}</Table.Td>
-                <Table.Td>{log.mileage.toLocaleString()}</Table.Td>
-                <Table.Td>{logPartsTotal(log) > 0 ? `$${logPartsTotal(log).toFixed(2)}` : "—"}</Table.Td>
-                <Table.Td>{log.labor_cost ? `$${Number(log.labor_cost).toFixed(2)}` : "—"}</Table.Td>
-                <Table.Td>
+                <Table.Td data-label="Date">{log.performed_on}</Table.Td>
+                <Table.Td data-label="Task">{log.task.name}</Table.Td>
+                <Table.Td data-label="Mileage">{log.mileage.toLocaleString()}</Table.Td>
+                <Table.Td data-label="Parts Cost">{logPartsTotal(log) > 0 ? `$${logPartsTotal(log).toFixed(2)}` : "—"}</Table.Td>
+                <Table.Td data-label="Labor Cost">{log.labor_cost ? `$${Number(log.labor_cost).toFixed(2)}` : "—"}</Table.Td>
+                <Table.Td data-label="Parts Used">
                   {log.parts_used?.length
                     ? log.parts_used.map((p) => (
                         <span key={p.id} style={{ display: "block" }}>
@@ -285,8 +285,8 @@ export default function VehicleDetail() {
                       ))
                     : "—"}
                 </Table.Td>
-                <Table.Td>{log.notes}</Table.Td>
-                <Table.Td>
+                <Table.Td data-label="Notes">{log.notes}</Table.Td>
+                <Table.Td data-label="">
                   <Group justify="flex-end">
                     <ActionIcon
                       variant="light"

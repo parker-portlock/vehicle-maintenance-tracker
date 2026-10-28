@@ -7,8 +7,9 @@ import VehicleDetail from "./pages/VehicleDetail";
 import Tasks from "./pages/Tasks";
 import Inventory from "./pages/Inventory";
 import Settings from "./pages/Settings";
-import { ThemeToggle, VersionWatermark } from "./components";
+import { MobileToggle, ThemeToggle, VersionWatermark } from "./components";
 import { useVehicles } from "./api/hooks";
+import { useMobileMode } from "./hooks/useMobileMode";
 
 const ONBOARDING_KEY = "vmt_onboarding_seen";
 
@@ -22,6 +23,8 @@ const linkStyle = (isActive: boolean) => ({
 export default function App() {
   const location = useLocation();
   const { data: vehicles } = useVehicles();
+  // Mobile-friendly view (persisted, toggled from the header like the theme).
+  const { isMobile, toggle: toggleMobile } = useMobileMode();
   // First-run hint: on the dashboard with no vehicles, point the user
   // to the Vehicles page. Shown once; dismissed permanently on click.
   const [onboarding, setOnboarding] = useState(() => {
@@ -42,7 +45,7 @@ export default function App() {
   };
 
   return (
-    <>
+    <div className={isMobile ? "vmt-app vmt-app-mobile" : "vmt-app"}>
       <Container size="xl" py="md">
         <Group justify="space-between" mb="xl" wrap="wrap">
           <Group>
@@ -82,6 +85,7 @@ export default function App() {
             <UnstyledButton component={NavLink} to="/settings" style={(props: any) => linkStyle(props.isActive)}>
               Settings
             </UnstyledButton>
+            <MobileToggle isMobile={isMobile} onToggle={toggleMobile} />
             <ThemeToggle />
           </Group>
         </Group>
@@ -94,6 +98,6 @@ export default function App() {
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </Container>
-    </>
+    </div>
   );
 }

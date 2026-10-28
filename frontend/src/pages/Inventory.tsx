@@ -195,17 +195,17 @@ export default function Inventory() {
           <Table.Tbody>
             {displayedParts.map((part) => (
               <Table.Tr key={part.id}>
-                <Table.Td>{part.brand}</Table.Td>
-                <Table.Td>{part.name}</Table.Td>
-                <Table.Td>{part.category}</Table.Td>
-                <Table.Td>{part.part_number}</Table.Td>
-                <Table.Td>{part.specification ?? "—"}</Table.Td>
-                <Table.Td>{formatCapacity(part.capacity, "units")}</Table.Td>
-                <Table.Td>{formatCurrency(part.cost)}</Table.Td>
-                <Table.Td>{part.quantity}</Table.Td>
-                <Table.Td>{part.supplier ?? "—"}</Table.Td>
-                <Table.Td>{part.notes ?? "—"}</Table.Td>
-                <Table.Td>
+                <Table.Td data-label="Brand">{part.brand}</Table.Td>
+                <Table.Td data-label="Name">{part.name}</Table.Td>
+                <Table.Td data-label="Category">{part.category}</Table.Td>
+                <Table.Td data-label="Part Number">{part.part_number}</Table.Td>
+                <Table.Td data-label="Specification">{part.specification ?? "—"}</Table.Td>
+                <Table.Td data-label="Capacity">{formatCapacity(part.capacity, "units")}</Table.Td>
+                <Table.Td data-label="Cost">{formatCurrency(part.cost)}</Table.Td>
+                <Table.Td data-label="Quantity">{part.quantity}</Table.Td>
+                <Table.Td data-label="Supplier">{part.supplier ?? "—"}</Table.Td>
+                <Table.Td data-label="Notes">{part.notes ?? "—"}</Table.Td>
+                <Table.Td data-label="">
                   <Group justify="flex-end" gap="sm">
                     <ActionIcon
                       variant="light"

@@ -98,12 +98,12 @@ export default function VehicleList() {
           <Table.Tbody>
             {vehicles?.map((v) => (
               <Table.Tr key={v.id}>
-                <Table.Td>{v.year}</Table.Td>
-                <Table.Td>{v.make}</Table.Td>
-                <Table.Td>{v.model}</Table.Td>
-                <Table.Td><Badge variant="light">{v.type}</Badge></Table.Td>
-                <Table.Td>{v.vin ?? "—"}</Table.Td>
-                <Table.Td>
+                <Table.Td data-label="Year">{v.year}</Table.Td>
+                <Table.Td data-label="Make">{v.make}</Table.Td>
+                <Table.Td data-label="Model">{v.model}</Table.Td>
+                <Table.Td data-label="Type"><Badge variant="light">{v.type}</Badge></Table.Td>
+                <Table.Td data-label="VIN">{v.vin ?? "—"}</Table.Td>
+                <Table.Td data-label="">
                   <Group justify="flex-end">
                     <ActionIcon
                       variant="light"
