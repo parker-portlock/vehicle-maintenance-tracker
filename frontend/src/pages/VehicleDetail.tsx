@@ -15,6 +15,8 @@ import type { LogPartRef, MaintenanceLog, Part } from "../api/types";
 import SpendChart from "../components/SpendChart";
 import SortableTh from "../components/SortableTh";
 import { sortRows, useTableSort } from "../hooks/useTableSort";
+import { useUnits } from "../hooks/useUnits";
+import { formatDistance, toMiles, unitLabel } from "../utils/units";
 
 export default function VehicleDetail() {
   const { id } = useParams<{ id: string }>();
@@ -28,6 +30,7 @@ export default function VehicleDetail() {
   const { data: parts } = useParts();
   // Column sorting for the log table (click a header to toggle)
   const { sort, toggleSort } = useTableSort();
+  const { units } = useUnits();
   const [opened, setOpened] = useState(false);
   const [editingLog, setEditingLog] = useState<MaintenanceLog | null>(null);
 
@@ -162,7 +165,8 @@ export default function VehicleDetail() {
     setEditingLog(log);
     form.setValues({
       task_id: log.task.id,
-      mileage: log.mileage,
+      // Show the mileage reading in the user's current unit (stored as miles)
+      mileage: formatDistance(log.mileage, units) ?? log.mileage,
       performed_on: dayjs(log.performed_on).toDate(),
       cost: log.cost != null ? String(log.cost) : "",
       labor_cost: log.labor_cost != null ? String(log.labor_cost) : "",
@@ -208,7 +212,8 @@ export default function VehicleDetail() {
       await updateLog.mutateAsync({
         logId: editingLog.id,
         task_id,
-        mileage: values.mileage,
+        // Convert the mileage reading back to miles (the stored unit)
+        mileage: Math.round(toMiles(values.mileage, units)),
         performed_on: performedOn,
         // Send explicit null for cleared fields: a key omitted from the body
         // leaves the existing value unchanged on the backend
@@ -221,7 +226,7 @@ export default function VehicleDetail() {
     } else {
       await createLog.mutateAsync({
         task_id,
-        mileage: values.mileage,
+        mileage: Math.round(toMiles(values.mileage, units)),
         performed_on: performedOn,
         cost: values.cost ? Number(values.cost) : undefined,
         labor_cost: values.labor_cost ? Number(values.labor_cost) : undefined,
@@ -249,7 +254,9 @@ export default function VehicleDetail() {
           <Group mt="xs">
             <Badge variant="light">{vehicle.type}</Badge>
             {latestMileage !== undefined && (
-              <Badge variant="outline" color="grape">{latestMileage.toLocaleString()} mi</Badge>
+              <Badge variant="outline" color="grape">
+                {formatDistance(latestMileage, units)?.toLocaleString()} {unitLabel(units).toLowerCase()}
+              </Badge>
             )}
             <Badge variant="outline" color="teal">Total Spent: ${totalSpend.toFixed(2)}</Badge>
             <Badge variant="outline" color="blue">Parts Spent: ${partsSpend.toFixed(2)}</Badge>
@@ -263,7 +270,7 @@ export default function VehicleDetail() {
         <Table>
           <Table.Thead>
             <Table.Tr>
-              {th("Date", "date")}{th("Task", "task")}{th("Mileage", "mileage")}
+              {th("Date", "date")}{th("Task", "task")}{th(unitLabel(units), "mileage")}
               {th("Parts Cost", "partsCost")}{th("Labor Cost", "laborCost")}
               <Table.Th>Parts Used</Table.Th><Table.Th>Notes</Table.Th><Table.Th />
             </Table.Tr>
@@ -273,7 +280,7 @@ export default function VehicleDetail() {
               <Table.Tr key={log.id}>
                 <Table.Td data-label="Date">{log.performed_on}</Table.Td>
                 <Table.Td data-label="Task">{log.task.name}</Table.Td>
-                <Table.Td data-label="Mileage">{log.mileage.toLocaleString()}</Table.Td>
+                <Table.Td data-label={unitLabel(units)}>{formatDistance(log.mileage, units)?.toLocaleString()}</Table.Td>
                 <Table.Td data-label="Parts Cost">{logPartsTotal(log) > 0 ? `$${logPartsTotal(log).toFixed(2)}` : "—"}</Table.Td>
                 <Table.Td data-label="Labor Cost">{log.labor_cost ? `$${Number(log.labor_cost).toFixed(2)}` : "—"}</Table.Td>
                 <Table.Td data-label="Parts Used">
@@ -342,7 +349,7 @@ export default function VehicleDetail() {
               ]}
               {...form.getInputProps("task_id")}
             />
-            <NumberInput required label="Mileage" min={0} {...form.getInputProps("mileage")} />
+            <NumberInput required label={`Mileage (${unitLabel(units)})`} min={0} {...form.getInputProps("mileage")} />
             <DatePickerInput
               withAsterisk
               clearable

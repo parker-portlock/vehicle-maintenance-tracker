@@ -1,8 +1,10 @@
 import { useState } from "react";
 import {
-  Alert, Button, Card, Divider, FileInput, Group, Stack, Text, Title,
+  Alert, Button, Card, Divider, FileInput, Group, SegmentedControl, Stack, Text, Title,
 } from "@mantine/core";
 import { downloadBackup, restoreBackup } from "../api/client";
+import { useUnits } from "../hooks/useUnits";
+import type { Units } from "../utils/units";
 
 export default function Settings() {
   const [isBackingUp, setIsBackingUp] = useState(false);
@@ -10,6 +12,7 @@ export default function Settings() {
   const [backupFile, setBackupFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const { units, setUnits } = useUnits();
 
   const clearFeedback = () => {
     setError(null);
@@ -66,6 +69,30 @@ export default function Settings() {
           Manage your application preferences.
         </Text>
       </div>
+
+      <Card withBorder padding="lg">
+        <Stack gap="md">
+          <Title order={4}>Preferences</Title>
+
+          <Group justify="space-between" wrap="wrap" align="flex-start">
+            <div>
+              <Text fw={600}>Units</Text>
+              <Text size="sm" c="dimmed">
+                Display maintenance intervals in Miles (Imperial) or Kilometers
+                (Metric). Values are converted live and shown as whole numbers.
+              </Text>
+            </div>
+            <SegmentedControl
+              value={units}
+              onChange={(value) => setUnits(value as Units)}
+              data={[
+                { value: "imperial", label: "Imperial" },
+                { value: "metric", label: "Metric" },
+              ]}
+            />
+          </Group>
+        </Stack>
+      </Card>
 
       <Card withBorder padding="lg">
         <Stack gap="md">

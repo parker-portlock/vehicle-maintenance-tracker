@@ -9,6 +9,8 @@ check it before upgrading (see "Upgrading" in the README).
 ## [0.8.0] - 2026-10-28
 
 ### Added
+- Settings: Units toggle (Imperial / Metric); preference persists in localStorage
+- Maintenance interval and log mileage display in Miles or Kilometers; values convert live and display as whole numbers
 - Vehicle detail and Inventory tables: sortable column headers — click to sort ascending, click again to sort descending
 - Mobile-friendly view: header toggle (next to the theme switch) constrains the app to a phone-like column, renders data tables as labeled cards, and collapses the top navigation into a hamburger menu (desktop view keeps the inline links); the setting persists in localStorage
 

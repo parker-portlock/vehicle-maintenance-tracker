@@ -7,6 +7,8 @@ import { IconEdit, IconTrash } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from "../api/hooks";
 import type { MaintenanceTask } from "../api/types";
+import { useUnits } from "../hooks/useUnits";
+import { formatDistance, toMiles, unitLabel } from "../utils/units";
 
 type TaskFormValues = {
   name: string;
@@ -20,6 +22,7 @@ export default function Tasks() {
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
+  const { units } = useUnits();
   const [opened, setOpened] = useState(false);
   const [editingTask, setEditingTask] = useState<MaintenanceTask | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -49,7 +52,9 @@ export default function Tasks() {
     form.setValues({
       name: task.name,
       description: task.description ?? "",
-      interval_miles: task.interval_miles ?? undefined,
+      // The form shows the interval in the user's current unit; the stored
+      // value is in miles (the canonical unit), so convert for display.
+      interval_miles: formatDistance(task.interval_miles, units) ?? undefined,
       interval_months: task.interval_months ?? undefined,
     });
     setEditingTask(task);
@@ -65,10 +70,17 @@ export default function Tasks() {
     setError(null);
     
     try {
+      // The form value is in the user's current unit; convert it back to
+      // miles (the canonical stored unit) before persisting.
+      const intervalMiles =
+        values.interval_miles == null
+          ? null
+          : Math.round(toMiles(values.interval_miles, units));
+      const payload = { ...values, interval_miles: intervalMiles };
       if (editingTask) {
-        await updateTask.mutateAsync({ id: editingTask.id, ...values });
+        await updateTask.mutateAsync({ id: editingTask.id, ...payload });
       } else {
-        await createTask.mutateAsync(values);
+        await createTask.mutateAsync(payload);
       }
       form.reset();
       setEditingTask(null);
@@ -102,7 +114,7 @@ export default function Tasks() {
             <Table.Tr>
               <Table.Th>Name</Table.Th>
               <Table.Th>Description</Table.Th>
-              <Table.Th>Interval (Miles)</Table.Th>
+              <Table.Th>Interval ({unitLabel(units)})</Table.Th>
               <Table.Th>Interval (Months)</Table.Th>
               <Table.Th />
             </Table.Tr>
@@ -112,9 +124,12 @@ export default function Tasks() {
               <Table.Tr key={t.id}>
                 <Table.Td data-label="Name">{t.name}</Table.Td>
                 <Table.Td data-label="Description"><Text size="sm">{t.description || "—"}</Text></Table.Td>
-                <Table.Td data-label="Interval (Miles)">
+                <Table.Td data-label={`Interval (${unitLabel(units)})`}>
                   {t.interval_miles !== null && t.interval_miles !== undefined ? (
-                    <Badge variant="light">Every {t.interval_miles} miles</Badge>
+                    <Badge variant="light">
+                      Every {formatDistance(t.interval_miles, units)}{" "}
+                      {unitLabel(units).toLowerCase()}
+                    </Badge>
                   ) : (
                     "—"
                   )}
@@ -202,8 +217,8 @@ export default function Tasks() {
             />
             <Group gap="md">
               <NumberInput
-                label="Interval in Miles (optional)"
-                placeholder="e.g., 5000"
+                label={`Interval in ${unitLabel(units)} (optional)`}
+                placeholder={units === "metric" ? "e.g., 8000" : "e.g., 5000"}
                 {...form.getInputProps("interval_miles")}
               />
               <NumberInput
