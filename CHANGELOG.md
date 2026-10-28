@@ -10,7 +10,7 @@ check it before upgrading (see "Upgrading" in the README).
 
 ### Added
 - Vehicle detail and Inventory tables: sortable column headers — click to sort ascending, click again to sort descending
-- Mobile-friendly view: header toggle (next to the theme switch) constrains the app to a phone-like column and renders data tables as labeled cards; the setting persists in localStorage
+- Mobile-friendly view: header toggle (next to the theme switch) constrains the app to a phone-like column, renders data tables as labeled cards, and collapses the top navigation into a hamburger menu (desktop view keeps the inline links); the setting persists in localStorage
 
 ### Changed
 - Log Maintenance form: "Parts Cost" field renamed to "Additional Parts Cost"; inventory parts cost is now calculated from the inventory parts used (inventory part cost × quantity; a part with no cost set counts as $0; null quantity counts as 1) and shown live in the form
