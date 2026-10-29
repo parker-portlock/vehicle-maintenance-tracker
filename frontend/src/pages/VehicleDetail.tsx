@@ -13,6 +13,10 @@ import {
 } from "../api/hooks";
 import type { LogPartRef, MaintenanceLog, Part } from "../api/types";
 import SpendChart from "../components/SpendChart";
+import SortableTh from "../components/SortableTh";
+import { sortRows, useTableSort } from "../hooks/useTableSort";
+import { useUnits } from "../hooks/useUnits";
+import { formatCapacity, formatDistance, toMiles, unitLabel, type CapacityType } from "../utils/units";
 
 export default function VehicleDetail() {
   const { id } = useParams<{ id: string }>();
@@ -24,6 +28,9 @@ export default function VehicleDetail() {
   const deleteLog = useDeleteLog(id!);
   const createTask = useCreateTask();
   const { data: parts } = useParts();
+  // Column sorting for the log table (click a header to toggle)
+  const { sort, toggleSort } = useTableSort();
+  const { units } = useUnits();
   const [opened, setOpened] = useState(false);
   const [editingLog, setEditingLog] = useState<MaintenanceLog | null>(null);
 
@@ -34,6 +41,12 @@ export default function VehicleDetail() {
   const [partQty, setPartQty] = useState<number>(1);
 
   const partById = new Map<string, Part>((parts ?? []).map((p) => [p.id, p]));
+  // Append a part's capacity in the current unit (e.g. " 1L"), or "" when the
+  // part has no capacity/unit set.
+  const capacitySuffix = (part?: Part): string =>
+    part && part.capacity != null && part.capacity_unit
+      ? " " + formatCapacity(part.capacity, part.capacity_unit as CapacityType, units)
+      : "";
   const partOptions = (parts ?? []).map((p) => ({
     value: p.id,
     // Zero-stock parts are grayed out, marked unavailable, and not selectable
@@ -56,9 +69,55 @@ export default function VehicleDetail() {
     [tasks]
   );
 
+  // A log's inventory parts cost: each used part's inventory cost × quantity.
+  // Parts with a null cost count as 0; a null quantity counts as 1.
+  const partsCostForLog = (log: MaintenanceLog): number =>
+    (log.parts_used ?? []).reduce((sum, lp) => {
+      const part = partById.get(lp.id);
+      return sum + (part?.cost ?? 0) * (lp.quantity ?? 1);
+    }, 0);
+
+  // Total parts cost for a log: inventory parts cost + additional parts cost (log.cost)
+  const logPartsTotal = (log: MaintenanceLog): number =>
+    partsCostForLog(log) + (log.cost ? Number(log.cost) : 0);
+
+  // Sort value for each log table column (null sorts last)
+  const logSortValue = (log: MaintenanceLog, key: string | null): string | number | null => {
+    switch (key) {
+      case "date":
+        return log.performed_on;
+      case "task":
+        return log.task.name;
+      case "mileage":
+        return log.mileage;
+      case "partsCost":
+        return logPartsTotal(log);
+      case "laborCost":
+        return log.labor_cost != null ? Number(log.labor_cost) : null;
+      default:
+        return null;
+    }
+  };
+
+  const displayedLogs = useMemo(
+    () => sortRows(logs ?? [], sort, (log) => logSortValue(log, sort.key)),
+    [logs, sort]
+  );
+
+  const th = (label: string, sortKey: string) => (
+    <SortableTh label={label} sortKey={sortKey} activeKey={sort.key} direction={sort.direction} onSort={toggleSort} />
+  );
+
+  // Live parts cost shown in the form while parts are being selected
+  const formPartsCost = selectedParts.reduce((sum, lp) => {
+    const part = partById.get(lp.id);
+    return sum + (part?.cost ?? 0) * (lp.quantity ?? 1);
+  }, 0);
+
+  // "Parts Spent" includes both the inventory parts cost and the additional parts cost
   const partsSpend = useMemo(
-    () => (logs ?? []).reduce((sum, l) => sum + (l.cost ? Number(l.cost) : 0), 0),
-    [logs]
+    () => (logs ?? []).reduce((sum, l) => sum + logPartsTotal(l), 0),
+    [logs, parts]
   );
   const laborSpend = useMemo(
     () => (logs ?? []).reduce((sum, l) => sum + (l.labor_cost ? Number(l.labor_cost) : 0), 0),
@@ -112,7 +171,8 @@ export default function VehicleDetail() {
     setEditingLog(log);
     form.setValues({
       task_id: log.task.id,
-      mileage: log.mileage,
+      // Show the mileage reading in the user's current unit (stored as miles)
+      mileage: formatDistance(log.mileage, units) ?? log.mileage,
       performed_on: dayjs(log.performed_on).toDate(),
       cost: log.cost != null ? String(log.cost) : "",
       labor_cost: log.labor_cost != null ? String(log.labor_cost) : "",
@@ -158,10 +218,13 @@ export default function VehicleDetail() {
       await updateLog.mutateAsync({
         logId: editingLog.id,
         task_id,
-        mileage: values.mileage,
+        // Convert the mileage reading back to miles (the stored unit)
+        mileage: Math.round(toMiles(values.mileage, units)),
         performed_on: performedOn,
-        cost: values.cost ? Number(values.cost) : undefined,
-        labor_cost: values.labor_cost ? Number(values.labor_cost) : undefined,
+        // Send explicit null for cleared fields: a key omitted from the body
+        // leaves the existing value unchanged on the backend
+        cost: values.cost ? Number(values.cost) : null,
+        labor_cost: values.labor_cost ? Number(values.labor_cost) : null,
         notes: values.notes || null,
         // Always send parts in edit mode so removals are applied to the log
         parts_used: selectedParts,
@@ -169,7 +232,7 @@ export default function VehicleDetail() {
     } else {
       await createLog.mutateAsync({
         task_id,
-        mileage: values.mileage,
+        mileage: Math.round(toMiles(values.mileage, units)),
         performed_on: performedOn,
         cost: values.cost ? Number(values.cost) : undefined,
         labor_cost: values.labor_cost ? Number(values.labor_cost) : undefined,
@@ -197,7 +260,9 @@ export default function VehicleDetail() {
           <Group mt="xs">
             <Badge variant="light">{vehicle.type}</Badge>
             {latestMileage !== undefined && (
-              <Badge variant="outline" color="grape">{latestMileage.toLocaleString()} mi</Badge>
+              <Badge variant="outline" color="grape">
+                {formatDistance(latestMileage, units)?.toLocaleString()} {unitLabel(units).toLowerCase()}
+              </Badge>
             )}
             <Badge variant="outline" color="teal">Total Spent: ${totalSpend.toFixed(2)}</Badge>
             <Badge variant="outline" color="blue">Parts Spent: ${partsSpend.toFixed(2)}</Badge>
@@ -211,25 +276,33 @@ export default function VehicleDetail() {
         <Table>
           <Table.Thead>
             <Table.Tr>
-              <Table.Th>Date</Table.Th><Table.Th>Task</Table.Th><Table.Th>Mileage</Table.Th>
-              <Table.Th>Parts Cost</Table.Th><Table.Th>Labor Cost</Table.Th><Table.Th>Parts Used</Table.Th><Table.Th>Notes</Table.Th><Table.Th />
+              {th("Date", "date")}{th("Task", "task")}{th(unitLabel(units), "mileage")}
+              {th("Parts Cost", "partsCost")}{th("Labor Cost", "laborCost")}
+              <Table.Th>Parts Used</Table.Th><Table.Th>Notes</Table.Th><Table.Th />
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
-            {logs?.map((log) => (
+            {displayedLogs.map((log) => (
               <Table.Tr key={log.id}>
-                <Table.Td>{log.performed_on}</Table.Td>
-                <Table.Td>{log.task.name}</Table.Td>
-                <Table.Td>{log.mileage.toLocaleString()}</Table.Td>
-                <Table.Td>{log.cost ? `$${Number(log.cost).toFixed(2)}` : "—"}</Table.Td>
-                <Table.Td>{log.labor_cost ? `$${Number(log.labor_cost).toFixed(2)}` : "—"}</Table.Td>
-                <Table.Td>
+                <Table.Td data-label="Date">{log.performed_on}</Table.Td>
+                <Table.Td data-label="Task">{log.task.name}</Table.Td>
+                <Table.Td data-label={unitLabel(units)}>{formatDistance(log.mileage, units)?.toLocaleString()}</Table.Td>
+                <Table.Td data-label="Parts Cost">{logPartsTotal(log) > 0 ? `$${logPartsTotal(log).toFixed(2)}` : "—"}</Table.Td>
+                <Table.Td data-label="Labor Cost">{log.labor_cost ? `$${Number(log.labor_cost).toFixed(2)}` : "—"}</Table.Td>
+                <Table.Td data-label="Parts Used">
                   {log.parts_used?.length
-                    ? log.parts_used.map((p) => `${p.name} ×${p.quantity ?? 1}`).join(", ")
+                    ? log.parts_used.map((p) => {
+                        const part = partById.get(p.id);
+                        return (
+                          <span key={p.id} style={{ display: "block" }}>
+                            {`${p.brand} ${p.name}${capacitySuffix(part)} ×${p.quantity ?? 1}`}
+                          </span>
+                        );
+                      })
                     : "—"}
                 </Table.Td>
-                <Table.Td>{log.notes}</Table.Td>
-                <Table.Td>
+                <Table.Td data-label="Notes">{log.notes}</Table.Td>
+                <Table.Td data-label="">
                   <Group justify="flex-end">
                     <ActionIcon
                       variant="light"
@@ -258,7 +331,7 @@ export default function VehicleDetail() {
         </Table>
       </Card>
 
-      <SpendChart logs={logs ?? []} />
+      <SpendChart logs={logs ?? []} getPartsCost={partsCostForLog} />
 
       <Modal
         opened={opened}
@@ -285,7 +358,7 @@ export default function VehicleDetail() {
               ]}
               {...form.getInputProps("task_id")}
             />
-            <NumberInput required label="Mileage" min={0} {...form.getInputProps("mileage")} />
+            <NumberInput required label={`Mileage (${unitLabel(units)})`} min={0} {...form.getInputProps("mileage")} />
             <DatePickerInput
               withAsterisk
               clearable
@@ -294,7 +367,7 @@ export default function VehicleDetail() {
               valueFormat="YYYY-MM-DD"
               {...form.getInputProps("performed_on")}
             />
-            <NumberInput label="Parts Cost ($)" min={0} decimalScale={2} {...form.getInputProps("cost")} />
+            <NumberInput label="Additional Parts Cost ($)" min={0} decimalScale={2} {...form.getInputProps("cost")} />
             <NumberInput label="Labor Cost ($)" min={0} decimalScale={2} {...form.getInputProps("labor_cost")} />
             <Textarea label="Notes" autosize minRows={2} {...form.getInputProps("notes")} />
             {/* Inventory Used */}
@@ -302,6 +375,7 @@ export default function VehicleDetail() {
               <Text fw={600}>Inventory Used</Text>
               <Text size="sm" c="dimmed">
                 Add the inventory parts used in this maintenance, with an exact quantity for each.
+                Their cost is calculated from the inventory (a part with no cost set counts as $0).
               </Text>
 
               {selectedParts.length > 0 && (
@@ -312,7 +386,7 @@ export default function VehicleDetail() {
                       <Group key={p.id} gap="xs">
                         <Group gap="sm" grow>
                           <Text size="sm" lineClamp={1}>
-                            {part ? `${part.brand} ${part.name}` : p.id}
+                            {part ? `${part.brand} ${part.name}${capacitySuffix(part)}` : p.id}
                           </Text>
                         </Group>
                         <NumberInput
@@ -334,6 +408,12 @@ export default function VehicleDetail() {
                     );
                   })}
                 </Stack>
+              )}
+
+              {selectedParts.length > 0 && (
+                <Text size="sm" fw={600} mt={4}>
+                  Parts Cost (from inventory): ${formPartsCost.toFixed(2)}
+                </Text>
               )}
 
               <Select

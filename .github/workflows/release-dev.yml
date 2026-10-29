@@ -1,12 +1,14 @@
 name: Release Dev
 
 on:
-  push:
-    branches: [dev]
+  pull_request_target:
+    types: [closed]
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    # Only run when a PR was actually merged into dev (closed includes unmerged PRs)
+    if: github.event.pull_request.merged && github.event.pull_request.base.ref == 'dev'
     permissions:
       contents: write
       packages: write
@@ -21,8 +23,19 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -f "v${{ steps.version.outputs.VERSION }}-dev"
-          git push origin "v${{ steps.version.outputs.VERSION }}-dev"
+          TAG="v${{ steps.version.outputs.VERSION }}-dev"
+          # Replace a pre-existing tag (e.g. from an earlier dev release of the
+          # same version) so the push is never rejected
+          if git ls-remote --tags origin "$TAG" | grep -q "refs/tags/$TAG"; then
+            git push origin ":refs/tags/$TAG"
+          fi
+          git tag "$TAG"
+          git push origin "$TAG"
+
+      - name: Delete existing dev release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release delete "v${{ steps.version.outputs.VERSION }}-dev" --yes 2>/dev/null || true
 
       - name: Extract changelog section
         run: |

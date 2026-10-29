@@ -18,6 +18,11 @@ class Part(Base):
     part_number: Mapped[str] = mapped_column(String, nullable=False)
     specification: Mapped[str | None] = mapped_column(String)
     capacity: Mapped[float | None] = mapped_column(Numeric(10, 2))
+    # Canonical capacity unit. Stored in metric so the value has one
+    # unambiguous meaning: "L" (volume) or "kg" (weight). Display units
+    # (qt / lbs) are derived client-side from the user's unit preference.
+    # Null when the part has a capacity number but no unit chosen.
+    capacity_unit: Mapped[str | None] = mapped_column(String)
     cost: Mapped[float | None] = mapped_column(Numeric(10, 2))
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     supplier: Mapped[str | None] = mapped_column(String)

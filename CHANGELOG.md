@@ -6,6 +6,24 @@ Format based on Keep a Changelog, adheres to Semantic Versioning.
 Releases that alter the database schema include a `### Database` section —
 check it before upgrading (see "Upgrading" in the README).
 
+## [0.8.0] - 2026-10-28
+
+### Added
+- Settings: Units toggle (Imperial / Metric); preference persists in localStorage
+- Maintenance interval and log mileage display in Miles or Kilometers; values convert live and display as whole numbers
+- Vehicle detail and Inventory tables: sortable column headers — click to sort ascending, click again to sort descending
+- Mobile-friendly view: header toggle (next to the theme switch) constrains the app to a phone-like column, renders data tables as labeled cards, and collapses the top navigation into a hamburger menu (desktop view keeps the inline links); the setting persists in localStorage
+- Inventory: optional Capacity unit selector (L/kg or qt/lbs per the Units setting); capacity displays with its unit and converts live (e.g. 5L, 4qt) in the Capacity column, "Parts Used" column, and log form's part list
+
+### Changed
+- Log Maintenance form: "Parts Cost" field renamed to "Additional Parts Cost"; inventory parts cost is now calculated from the inventory parts used (inventory part cost × quantity; a part with no cost set counts as $0; null quantity counts as 1) and shown live in the form
+- Vehicle detail: "Parts Spent" badge, log table parts cost column, and the spending chart's Parts series now include both the inventory parts cost and the additional parts cost
+- Vehicle detail log table: "Parts Used" column now shows each part's brand before the name, one part per line
+- Editing a log: the Additional Parts Cost (or Labor Cost) value can be cleared; an empty field saves as no value
+
+### Database
+- New `parts.capacity_unit` column (nullable; "L" or "kg")
+
 ## [0.7.2] - 2026-10-25
 
 ### Changed

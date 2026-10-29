@@ -116,8 +116,8 @@ export function useUpdateLog(vehicleId: string) {
       task_id?: string;
       mileage?: number;
       performed_on?: string;
-      cost?: number;
-      labor_cost?: number;
+      cost?: number | null;
+      labor_cost?: number | null;
       notes?: string | null;
       parts_used?: LogPartRef[] | null;
     }) =>

@@ -9,6 +9,9 @@ class PartBase(BaseModel):
     part_number: str
     specification: Optional[str] = None
     capacity: Optional[float] = None
+    # Canonical metric unit for capacity: "L" or "kg". Null = no unit chosen.
+    # Display units (qt/lbs) are derived on the client from the unit setting.
+    capacity_unit: Optional[str] = None
     cost: Optional[float] = None
     quantity: int
     supplier: Optional[str] = None

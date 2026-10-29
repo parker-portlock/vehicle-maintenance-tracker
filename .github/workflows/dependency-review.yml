@@ -1,0 +1,40 @@
+name: Dependency Review
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  # Required for comment-summary-in-pr: always in the dependency-review job
+  pull-requests: write
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0
+        with:
+          license-check: true
+          vulnerability-check: true
+          deny-licenses: GPL-2.0, GPL-3.0, AGPL-3.0, AGPL-1.0, LGPL-2.0, SSPL-1.0
+          fail-on-severity: high
+          comment-summary-in-pr: always
+
+  notices-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      # Verify every pinned dependency (frontend/package-lock.json,
+      # backend/requirements*.lock) is listed in THIRD_PARTY_NOTICES.md at the
+      # same version, and that no stale entries remain.
+      - name: Check THIRD_PARTY_NOTICES.md against lock files
+        run: python3 scripts/check_third_party_notices.py
