@@ -16,7 +16,7 @@ import SpendChart from "../components/SpendChart";
 import SortableTh from "../components/SortableTh";
 import { sortRows, useTableSort } from "../hooks/useTableSort";
 import { useUnits } from "../hooks/useUnits";
-import { formatDistance, toMiles, unitLabel } from "../utils/units";
+import { formatCapacity, formatDistance, toMiles, unitLabel, type CapacityType } from "../utils/units";
 
 export default function VehicleDetail() {
   const { id } = useParams<{ id: string }>();
@@ -41,6 +41,12 @@ export default function VehicleDetail() {
   const [partQty, setPartQty] = useState<number>(1);
 
   const partById = new Map<string, Part>((parts ?? []).map((p) => [p.id, p]));
+  // Append a part's capacity in the current unit (e.g. " 1L"), or "" when the
+  // part has no capacity/unit set.
+  const capacitySuffix = (part?: Part): string =>
+    part && part.capacity != null && part.capacity_unit
+      ? " " + formatCapacity(part.capacity, part.capacity_unit as CapacityType, units)
+      : "";
   const partOptions = (parts ?? []).map((p) => ({
     value: p.id,
     // Zero-stock parts are grayed out, marked unavailable, and not selectable
@@ -285,11 +291,14 @@ export default function VehicleDetail() {
                 <Table.Td data-label="Labor Cost">{log.labor_cost ? `$${Number(log.labor_cost).toFixed(2)}` : "—"}</Table.Td>
                 <Table.Td data-label="Parts Used">
                   {log.parts_used?.length
-                    ? log.parts_used.map((p) => (
-                        <span key={p.id} style={{ display: "block" }}>
-                          {`${p.brand} ${p.name} ×${p.quantity ?? 1}`}
-                        </span>
-                      ))
+                    ? log.parts_used.map((p) => {
+                        const part = partById.get(p.id);
+                        return (
+                          <span key={p.id} style={{ display: "block" }}>
+                            {`${p.brand} ${p.name}${capacitySuffix(part)} ×${p.quantity ?? 1}`}
+                          </span>
+                        );
+                      })
                     : "—"}
                 </Table.Td>
                 <Table.Td data-label="Notes">{log.notes}</Table.Td>
@@ -377,7 +386,7 @@ export default function VehicleDetail() {
                       <Group key={p.id} gap="xs">
                         <Group gap="sm" grow>
                           <Text size="sm" lineClamp={1}>
-                            {part ? `${part.brand} ${part.name}` : p.id}
+                            {part ? `${part.brand} ${part.name}${capacitySuffix(part)}` : p.id}
                           </Text>
                         </Group>
                         <NumberInput
