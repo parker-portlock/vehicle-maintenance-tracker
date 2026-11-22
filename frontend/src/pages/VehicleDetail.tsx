@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
-  ActionIcon, Badge, Button, Card, Group, Loader, Modal, NativeSelect,
+  ActionIcon, Badge, Button, Card, Group, Loader, Menu, Modal, NativeSelect,
   NumberInput, Select, Stack, Table, Text, Textarea, Title,
 } from "@mantine/core";
-import { IconEdit, IconPlus, IconTrash, IconX } from "@tabler/icons-react";
+import {
+  IconDownload, IconEdit, IconFileSpreadsheet, IconFileText, IconPlus, IconTrash, IconX,
+} from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
 import { DatePickerInput } from "@mantine/dates";
 import dayjs from "dayjs";
@@ -17,6 +19,7 @@ import SortableTh from "../components/SortableTh";
 import { sortRows, useTableSort } from "../hooks/useTableSort";
 import { useUnits } from "../hooks/useUnits";
 import { formatCapacity, formatDistance, toMiles, unitLabel, type CapacityType } from "../utils/units";
+import { downloadCsv, downloadPdf, sanitizeFileName } from "../utils/exportLogs";
 
 export default function VehicleDetail() {
   const { id } = useParams<{ id: string }>();
@@ -107,6 +110,7 @@ export default function VehicleDetail() {
   const th = (label: string, sortKey: string) => (
     <SortableTh label={label} sortKey={sortKey} activeKey={sort.key} direction={sort.direction} onSort={toggleSort} />
   );
+
 
   // Live parts cost shown in the form while parts are being selected
   const formPartsCost = selectedParts.reduce((sum, lp) => {
@@ -250,6 +254,49 @@ export default function VehicleDetail() {
   if (vLoading || lLoading) return <Loader />;
   if (!vehicle) return <Text>Vehicle not found</Text>;
 
+  // --- Export the maintenance table (CSV or PDF) ------------------------
+  // The rows mirror the on-screen log table, in the current sort order.
+  // The Spending Trends chart is a separate view and is not exported.
+  const exportHeaders = [
+    "Date", "Task", unitLabel(units), "Parts Cost", "Labor Cost", "Parts Used", "Notes",
+  ];
+
+  const logRowForExport = (log: MaintenanceLog): string[] => [
+    log.performed_on,
+    log.task.name,
+    formatDistance(log.mileage, units)?.toLocaleString() ?? "",
+    logPartsTotal(log) > 0 ? `$${logPartsTotal(log).toFixed(2)}` : "—",
+    log.labor_cost != null ? `$${Number(log.labor_cost).toFixed(2)}` : "—",
+    log.parts_used?.length
+      ? log.parts_used
+          .map((p) => {
+            const part = partById.get(p.id);
+            return `${p.brand} ${p.name}${capacitySuffix(part)} ×${p.quantity ?? 1}`;
+          })
+          .join("; ")
+      : "—",
+    log.notes ?? "",
+  ];
+
+  const exportFileName = sanitizeFileName(
+    `${vehicle.year} ${vehicle.make} ${vehicle.model} - Maintenance Logs`
+  );
+
+  const handleExport = (format: "csv" | "pdf") => {
+    const rows = displayedLogs.map(logRowForExport);
+    if (format === "csv") {
+      downloadCsv(`${exportFileName}.csv`, exportHeaders, rows);
+    } else {
+      downloadPdf(
+        `${exportFileName}.pdf`,
+        `${vehicle.year} ${vehicle.make} ${vehicle.model} - Maintenance Logs`,
+        exportHeaders,
+        rows
+      ).catch(() => alert("The PDF export failed. Try again or use the CSV export."));
+    }
+  };
+  // -----------------------------------------------------------------------
+
   return (
     <Stack gap="lg">
       <Group justify="space-between">
@@ -269,7 +316,30 @@ export default function VehicleDetail() {
             <Badge variant="outline" color="violet">Labor Spent: ${laborSpend.toFixed(2)}</Badge>
           </Group>
         </div>
-        <Button onClick={() => openCreate()}>+ Log Maintenance</Button>
+        <Group>
+          <Menu shadow="md" width={190}>
+            <Menu.Target>
+              <Button variant="light" leftSection={<IconDownload size={16} />}>Export</Button>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Item
+                leftSection={<IconFileSpreadsheet size={16} />}
+                onClick={() => handleExport("csv")}
+                disabled={!logs?.length}
+              >
+                Export as CSV
+              </Menu.Item>
+              <Menu.Item
+                leftSection={<IconFileText size={16} />}
+                onClick={() => handleExport("pdf")}
+                disabled={!logs?.length}
+              >
+                Export as PDF
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
+          <Button onClick={() => openCreate()}>+ Log Maintenance</Button>
+        </Group>
       </Group>
 
       <Card withBorder padding={0}>

@@ -29,6 +29,8 @@ Third-party software used by **vehicle-maintenance-tracker** and the licenses un
 | `@tabler/icons-react` | `3.47.0` | MIT |
 | `@tanstack/react-query` | `5.102.8` | MIT |
 | `dayjs` | `1.11.23` | MIT |
+| `jspdf` | `4.2.1` | MIT |
+| `jspdf-autotable` | `5.0.9` | MIT |
 | `react` | `18.3.1` | MIT |
 | `react-dom` | `18.3.1` | MIT |
 | `react-router-dom` | `7.18.3` | MIT |
@@ -57,24 +59,41 @@ Third-party software used by **vehicle-maintenance-tracker** and the licenses un
 | `@tanstack/query-core` | `5.102.8` | MIT |
 | `@types/prop-types` | `15.7.15` | MIT |
 | `@types/react` | `18.3.31` | MIT |
+| `base64-arraybuffer` | `1.0.2` | MIT |
+| `canvg` | `3.0.11` | MIT |
 | `clsx` | `2.1.1` | MIT |
 | `cookie` | `1.1.1` | MIT |
+| `core-js` | `3.51.0` | MIT |
+| `css-line-break` | `2.1.0` | MIT |
 | `csstype` | `3.2.3` | MIT |
 | `detect-node-es` | `1.1.0` | MIT |
+| `dompurify` | `3.5.0` | (MPL-2.0 OR Apache-2.0) |
 | `fast-deep-equal` | `3.1.3` | MIT |
+| `fast-png` | `6.4.0` | MIT |
+| `fflate` | `0.8.3` | MIT |
 | `get-nonce` | `1.0.1` | MIT |
+| `html2canvas` | `1.4.1` | MIT |
+| `iobuffer` | `5.4.0` | MIT |
 | `js-tokens` | `4.0.0` | MIT |
 | `klona` | `2.0.6` | MIT |
 | `loose-envify` | `1.4.0` | MIT |
+| `pako` | `2.2.0` | (MIT AND Zlib) |
+| `performance-now` | `2.1.0` | MIT |
+| `raf` | `3.4.1` | MIT |
 | `react-number-format` | `5.4.5` | MIT |
 | `react-remove-scroll` | `2.7.2` | MIT |
 | `react-remove-scroll-bar` | `2.3.8` | MIT |
 | `react-router` | `7.18.3` | MIT |
 | `react-style-singleton` | `2.2.3` | MIT |
 | `react-textarea-autosize` | `8.5.9` | MIT |
+| `regenerator-runtime` | `0.13.11` | MIT |
+| `rgbcolor` | `1.0.1` | (MIT OR SEE LICENSE IN FEEL-FREE.md) |
 | `scheduler` | `0.23.2` | MIT |
 | `set-cookie-parser` | `2.7.2` | MIT |
+| `stackblur-canvas` | `2.7.0` | MIT |
+| `svg-pathdata` | `6.0.3` | MIT |
 | `tabbable` | `6.5.0` | MIT |
+| `text-segmentation` | `1.0.3` | MIT |
 | `tslib` | `2.8.1` | 0BSD |
 | `type-fest` | `4.41.0` | (MIT OR CC0-1.0) |
 | `use-callback-ref` | `1.3.3` | MIT |
@@ -82,6 +101,7 @@ Third-party software used by **vehicle-maintenance-tracker** and the licenses un
 | `use-isomorphic-layout-effect` | `1.2.1` | MIT |
 | `use-latest` | `1.3.0` | MIT |
 | `use-sidecar` | `1.1.3` | MIT |
+| `utrie` | `1.0.2` | MIT |
 
 ### 2.4 Transitive development dependencies (build tooling, not shipped)
 
@@ -169,6 +189,9 @@ Third-party software used by **vehicle-maintenance-tracker** and the licenses un
 | `@types/babel__template` | `7.4.4` | MIT |
 | `@types/babel__traverse` | `7.28.0` | MIT |
 | `@types/estree` | `1.0.9` | MIT |
+| `@types/pako` | `2.0.4` | MIT |
+| `@types/raf` | `3.4.3` | MIT |
+| `@types/trusted-types` | `2.0.7` | MIT |
 | `baseline-browser-mapping` | `2.11.21` | Apache-2.0 |
 | `browserslist` | `4.28.9` | MIT |
 | `caniuse-lite` | `1.0.30001810` | CC-BY-4.0 |
