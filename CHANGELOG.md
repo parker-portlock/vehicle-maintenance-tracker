@@ -6,6 +6,14 @@ Format based on Keep a Changelog, adheres to Semantic Versioning.
 Releases that alter the database schema include a `### Database` section —
 check it before upgrading (see "Upgrading" in the README).
 
+## [0.9.0] - 2026-11-22
+
+### Added
+- Vehicle detail: "Export" menu next to "Log Maintenance"; exports the maintenance table (in the current sort order) as a CSV or PDF file; the Spending Trends chart is not included
+
+### Fixed
+- Bump `opentelemetry-api` from 1.45.1 to 1.45.2; fixes CVE-2026-126360 (ReDoS in `traceparent` parsing, Moderate severity)
+
 ## [0.8.0] - 2026-10-28
 
 ### Added
