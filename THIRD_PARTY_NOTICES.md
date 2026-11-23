@@ -244,7 +244,7 @@ Direct dependencies from `pyproject.toml` plus resolved transitive dependencies 
 | `jmespath` | `1.1.0` | MIT |
 | `Mako` | `1.4.3` | MIT |
 | `MarkupSafe` | `3.0.4` | BSD-3-Clause |
-| `opentelemetry-api` | `1.45.1` | Apache-2.0 |
+| `opentelemetry-api` | `1.45.2` | Apache-2.0 |
 | `packaging` | `26.3` | Apache-2.0 OR BSD-2-Clause |
 | `pluggy` | `1.7.0` | MIT |
 | `psycopg2-binary` | `2.9.13` | LGPL with exceptions |
